@@ -1,0 +1,109 @@
+version: "3"
+
+networks:
+  proxy:
+    external: true
+
+  guacamole:
+    internal: true
+
+
+services:
+
+  init-guacamole-db:
+    image: guacamole/guacamole:latest
+    container_name: guacamole_initdb
+    command: ["/bin/sh", "-c", "test -e /init/initdb.sql && echo 'init file already exists' || /opt/guacamole/bin/initdb.sh --postgres > /init/initdb.sql" ]
+    volumes:
+      - ./dbinit:/init
+    networks:
+      - guacamole
+
+  postgres:
+    image: postgres:latest
+    container_name: guacamole_postgres
+    restart: unless-stopped
+    volumes:
+      - ./dbinit:/docker-entrypoint-initdb.d
+      - ./dbdata:/var/lib/postgresql/data
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-guacdb}   #Set postgres username in included .env file
+      POSTGRES_PASSWORD:   #Set postgres password in included .env file
+    depends_on:
+      - init-guacamole-db
+    networks:
+      - guacamole
+
+  guacd:
+    image: guacamole/guacd:latest
+    container_name: guacamole_guacd
+    restart: unless-stopped
+    networks:
+      - proxy
+      - guacamole
+
+  guac:
+    image: guacamole/guacamole:latest
+    container_name: guacamole
+    restart: unless-stopped
+    volumes:
+      - ./guacamole_home:/guacamole_home
+    #ports:
+      #- "8080:8080"
+    networks:
+      - proxy
+      - guacamole
+    links:
+      - guacd:guacd
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+  
+      # Routers
+      - "traefik.http.routers.guacamole.entrypoints=http"
+      - "traefik.http.routers.guacamole.rule=Host(`$HOST.$DOMAIN`)"
+      - "traefik.http.routers.guacamole.middlewares=guacamole-https-redirect"
+  
+      - "traefik.http.routers.guacamole-secure.entrypoints=https"
+      - "traefik.http.routers.guacamole-secure.rule=Host(`$HOST.$DOMAIN`)"
+      - "traefik.http.routers.guacamole-secure.tls=true"
+      #- "traefik.http.routers.guacamole-secure.tls.certresolver=le"  #Uncomment to enable Lets Encrypt integration with Traefik
+      - "traefik.http.routers.guacamole-secure.service=guacamole"
+      - "traefik.http.routers.guacamole-secure.middlewares=add-guacamole"
+  
+      # Service definition
+      - "traefik.http.services.guacamole.loadbalancer.server.port=8080"
+  
+      # Middleware definitions
+      - "traefik.http.middlewares.guacamole-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.add-guacamole.addPrefix.prefix=/guacamole"
+  
+    environment:
+      GUACD_HOSTNAME: guacd
+      POSTGRES_HOSTNAME: postgres
+      POSTGRES_DATABASE: ${POSTGRES_USER:-guacdb}    #Set postgres username in included .env file
+      POSTGRES_USER: ${POSTGRES_USER:-guacdb}    #Set postgres password in included .env file
+      POSTGRES_PASSWORD:
+        
+      #Duo 2FA (Ensure you first set Duo 2FA parameters as outlined in /guacamole_home/guacamole.properties file and then uncomment below to enable)
+#      GUACAMOLE_HOME: /guacamole_home
+        
+      #LDAP Authentication
+      LDAP_HOSTNAME: $LDAP_HOST
+      LDAP_PORT: $LDAP_PORT
+      LDAP_ENCRYPTION_METHOD: $LDAP_ENCRYPTION    #Allowed Values are none ssl or starttls
+      LDAP_SEARCH_BIND_DN: $LDAP_BIND_DN
+      LDAP_SEARCH_BIND_PASSWORD: $LDAP_BIND_PASSWORD
+      LDAP_USER_BASE_DN: $LDAP_USER_DN
+      LDAP_USERNAME_ATTRIBUTE: sAMAccountName
+    depends_on:
+      - postgres
+      - guacd
+  
+volumes:
+  dbinit:
+    driver: local
+  dbdata:
+    driver: local
+  

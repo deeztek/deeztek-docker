@@ -1,0 +1,17 @@
+version: '3.6'
+
+services:
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: socket-proxy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      CONTAINERS: 1
+    networks:
+      - TRAEFIK-NETWORK
+
+networks:
+    TRAEFIK-NETWORK:
+    external: true

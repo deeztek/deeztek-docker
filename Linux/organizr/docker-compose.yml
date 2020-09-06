@@ -1,0 +1,49 @@
+version: "2"
+services:
+  organizr:
+    image: organizrtools/organizr-v2:latest
+    container_name: organizr
+    restart: unless-stopped
+    environment:
+      - PUID=$PUID
+      - PGID=$PGID
+      - TZ=$TZ
+      - UMASK_SET=022 #optional
+    #user: "999"
+    volumes:
+      - /opt/organizr/config:/config
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      #Routers
+      - "traefik.http.routers.organizr.entrypoints=http"
+      - "traefik.http.routers.organizr.rule=Host(`organizr.$DOMAIN`)"
+      - "traefik.http.routers.organizr.middlewares=organizr-https-redirect"
+      - "traefik.http.routers.organizr-secure.entrypoints=https"
+      - "traefik.http.routers.organizr-secure.rule=Host(`organizer.$DOMAIN`)"
+      - "traefik.http.routers.organizr-secure.tls=true"
+      #- "traefik.http.routers.organizr-secure.tls.certresolver=le"
+      - "traefik.http.routers.organizr-secure.service=organizr"
+
+      #Service definitions
+      - "traefik.http.services.organizr.loadbalancer.server.port=80"      
+
+      #Middleware definitions
+      - "traefik.http.middlewares.organizr-https-redirect.redirectscheme.scheme=https"
+
+      #Authelia authentication
+      #- "traefik.http.routers.organizr-secure.middlewares=authelia@docker"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+      
+networks:
+  proxy:
+    external: true
+
+  
+
+

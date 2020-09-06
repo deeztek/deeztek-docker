@@ -1,0 +1,64 @@
+version: '2'
+
+networks:
+  proxy:
+    external: true
+
+services:
+  bitwarden:
+    image: 'bitwardenrs/server-mysql:latest'
+    container_name: bitwarden
+    networks:
+      - proxy
+    volumes:
+      - bw-data:/bw-data/
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - RUST_BACKTRACE=full
+      - DATABASE_URL=mysql://$DBUSERNAME:$DBPASSWORD@$DBSERVER/$BITWARDENDATABASE
+      - DATA_FOLDER=$DATAFOLDER
+      - ENABLE_DB_WAL=false
+      - ADMIN_TOKEN=$ADMINTOKEN
+      - SMTP_HOST=$SMTPHOST
+      - SMTP_FROM=$SMTPFROM
+      - SMTP_PORT=$SMTPPORT
+      - SMTP_SSL=$SMTPSSL
+      - SMTP_USERNAME=$SMTPUSERNAME
+      - SMTP_PASSWORD=$SMTPPASSWORD
+      - SIGNUPS_ALLOWED=$SIGNUPSALLOWED
+      - DOMAIN=$BITWARDENDOMAIN
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      #Routers
+      - "traefik.http.routers.bitwarden.entrypoints=http"
+      - "traefik.http.routers.bitwarden.rule=Host(`bitwarden.$DOMAIN`)"
+      - "traefik.http.routers.bitwarden.middlewares=bitwarden-https-redirect"
+      - "traefik.http.routers.bitwarden-secure.entrypoints=https"
+      - "traefik.http.routers.bitwarden-secure.rule=Host(`bitwarden.$DOMAIN`)"
+      - "traefik.http.routers.bitwarden-secure.tls=true"
+      #- "traefik.http.routers.bitwarden-secure.tls.certresolver=le"
+      - "traefik.http.routers.bitwarden-secure.service=bitwarden"
+
+      #Service definition
+      - "traefik.http.services.bitwarden.loadbalancer.server.port=80"
+
+      #Middelware definitions
+      - "traefik.http.middlewares.bitwarden-https-redirect.redirectscheme.scheme=https"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+      volumes:
+        bw-data:
+          driver: local
+          driver_opts:
+            type: nfs
+            o: addr=192.168.xxx.xxx,nolock,soft,rw
+            device: :/mnt/bw-data
+      
+      

@@ -1,0 +1,76 @@
+version: "3"
+services:
+  sabnzbd:
+    image: linuxserver/sabnzbd
+    container_name: sabnzbd
+    restart: unless-stopped
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - UMASK_SET=022 #optional
+    volumes:
+      - ./config:/config
+      - sabnzbd_complete:/sabnzbd_complete
+      - sabnzbd_incomplete:/incomplete-downloads
+      - sabnzbd_manual:/manual-downloads
+
+    networks:
+      - proxy
+    ports:
+      #- 8081:8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      #Routers
+      - "traefik.http.routers.sabnzbd.entrypoints=http"
+      - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.$DOMAIN`)"
+      - "traefik.http.routers.sabnzbd.middlewares=sabnzbd-https-redirect"
+      - "traefik.http.routers.sabnzbd-secure.entrypoints=https"
+      - "traefik.http.routers.sabnzbd-secure.rule=Host(`sabnzbd.$DOMAIN`)"
+      - "traefik.http.routers.sabnzbd-secure.tls=true"
+      #- "traefik.http.routers.sabnzbd-secure.tls.certresolver=le"
+      - "traefik.http.routers.sabnzbd-secure.service=sabnzbd"
+ 
+      #Service definition
+      - "traefik.http.services.sabnzbd.loadbalancer.server.port=8080"
+
+      #Middleware definitions
+      - "traefik.http.middlewares.sabnzbd-https-redirect.redirectscheme.scheme=https"
+
+      #Authenticate with Organizr
+      #- "traefik.http.routers.sabnzbd-secure.middlewares=auth"
+      #- "traefik.http.middlewares.auth.forwardauth.address=https://organizr.$DOMAIN/api/?v1/auth&group=1"
+
+      #Authelia authentication
+      #- "traefik.http.routers.sabnzbd-secure.middlewares=authelia@docker"
+      
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+
+volumes:
+
+  sabnzbd_complete:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/sabnzbd/complete
+
+  sabnzbd_incomplete:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/sabnzbd/incomplete
+
+  sabnzbd_manual:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/sabnzbd/manual
+
+networks:
+  proxy:
+    external: true
+

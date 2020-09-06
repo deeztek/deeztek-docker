@@ -1,0 +1,79 @@
+version: "2.1"
+services:
+  lazylibrarian:
+    image: linuxserver/lazylibrarian
+    container_name: lazylibrarian
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - DOCKER_MODS=linuxserver/calibre-web:calibre #optional
+    volumes:
+      - ./config:/config
+      - ./downloads:/downloads
+      - librarian_books:/books
+      - sabnzbd_books:/sabnzbd_books
+      - deluge_books:/deluge_books
+
+    networks:
+      - proxy
+    ports:
+      - 5299:5299
+    restart: unless-stopped
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.librarian.entrypoints=http"
+      - "traefik.http.routers.librarian.rule=Host(`books.$DOMAIN`)"
+      - "traefik.http.routers.librarian.middlewares=librarian-https-redirect"
+      - "traefik.http.routers.librarian-secure.entrypoints=https"
+      - "traefik.http.routers.librarian-secure.rule=Host(`books.$DOMAIN`)"
+      - "traefik.http.routers.librarian-secure.tls=true"
+      #- "traefik.http.routers.librarian-secure.tls.certresolver=le"
+      - "traefik.http.routers.librarian-secure.service=librarian"
+
+      # Service definition
+      - "traefik.http.services.librarian.loadbalancer.server.port=5299"
+
+      # Middleware definitions
+      - "traefik.http.middlewares.librarian-https-redirect.redirectscheme.scheme=https"
+
+      #Authenticate with Organizr
+      #- "traefik.http.routers.librarian-secure.middlewares=auth"
+      #- "traefik.http.middlewares.auth.forwardauth.address=https://organizr.$DOMAIN/api/?v1/auth&group=1"
+
+      #Authelia authentication
+      #- "traefik.http.routers.librarian-secure.middlewares=authelia@docker"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+volumes:
+ 
+  librarian_books:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/shares/Books
+
+  sabnzbd_books:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/sabnzbd/complete
+
+  deluge_books:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/deluge/complete
+
+
+
+networks:
+  proxy:
+    external: true
+

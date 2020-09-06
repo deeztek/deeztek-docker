@@ -1,0 +1,15 @@
+<configuration>
+
+    <!-- Appender for debugging -->
+    <appender name="GUAC-DEBUG" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Log at DEBUG level "info" "debug" "trace" "warn" "error" -->
+    <root level="info">
+        <appender-ref ref="GUAC-DEBUG"/>
+    </root>
+
+</configuration>

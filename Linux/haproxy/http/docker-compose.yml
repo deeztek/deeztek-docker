@@ -1,0 +1,22 @@
+version: '2'
+
+services:
+  portainer:
+    image: 'haproxy'
+    container_name: myhaproxy
+
+    volumes:
+      - ./config/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+      - ./ssl/haproxy.pem:/etc/haproxy/haproxy.pem
+
+    ports:
+      - '443:443'
+      - '80:80'
+      - '8081:8081' #Stats Ports
+
+    restart: always
+
+
+
+      
+      

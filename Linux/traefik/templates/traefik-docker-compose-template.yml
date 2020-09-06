@@ -1,0 +1,95 @@
+version: '3'
+
+networks:
+  proxy:
+    external: true
+
+services:
+  traefik:
+    image: traefik:v2.2
+    container_name: traefik
+    command:
+
+      - "--api.dashboard=true" #Enable Traefik Dashboard
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=tcp://socket-proxy:2375" #Connect to socket-proxy container that monitors Docker Unix Sock
+      - "--providers.docker.watch=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      #- "--serversTransport.insecureSkipVerify=true" #Disables SSL Certificate Verification between Traefik and endpoint
+      #- "--entryPoints.http.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.xxx.xxx/24" #Uncomment and set IP 192.168.xxx.xxx if you have upstream proxy like Nginx in order to get correct X-Forwarded-for IP header
+      #- "--entryPoints.https.forwardedHeaders.trustedIPs=127.0.0.1/32, 192.168.xxx.xxx/24" #Uncomment and set IP 192.168.xxx.xxx if you have upstream proxy like Nginx in order to get correct X-Forwarded-for IP header
+      - "--log=true"
+      - "--log.level=DEBUG" # (Default: error) DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+      - "--accessLog=true"
+      - "--accessLog.filePath=/var/log/docker/traefik.log"
+      - "--accessLog.bufferingSize=100" # Configuring a buffer of 100 lines
+#     - "--accessLog.filters.statusCodes=400-499"
+      - "--certificatesResolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory" # uncomment when testing
+#ACME dnsChallenge uncomment below and substitute <provider> with DNS provider listed on https://docs.traefik.io/v2.0/https/acme/. 
+#You must also setup necessary fields as per your DNS provider under the environment section below
+#      - "--certificatesResolvers.le.acme.dnsChallenge.provider=<provider>" 
+#      - "--certificatesResolvers.le.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53" #ACME dnsChallenge uncomment when using ACME dnsChallenge
+#      - "--certificatesResolvers.le.acme.dnsChallenge.delayBeforeCheck=60" #ACME dnsChallenge uncomment when using ACME dnsChallenge
+      - "--certificatesResolvers.le.acme.httpChallenge.entryPoint=http" #ACME httpChallange
+#      - "--certificatesresolvers.le.acme.tlschallenge=true" #ACME TLS Challenge
+      - "--certificatesresolvers.le.acme.email=ACME-EMAIL"
+      - "--certificatesresolvers.le.acme.storage=/etc/traefik/acme.json"
+      - "--providers.file.filename=/traefik_conf.yaml" #Qualsys TLS Settings
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`ACME-HOSTNAME.ACME-DOMAIN`)"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=TRAEFIK-CREDENTIALS"
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`ACME-HOSTNAME.ACME-DOMAIN`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik-secure.tls=true"
+#     - "traefik.http.routers.traefik-secure.tls.certresolver=le"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+#Qualsys TLS Settings
+      - "traefik.http.middlewares.securedheaders.headers.forcestsheader=true"
+      - "traefik.http.middlewares.securedheaders.headers.sslRedirect=true"
+      - "traefik.http.middlewares.securedheaders.headers.STSPreload=true"
+      - "traefik.http.middlewares.securedheaders.headers.ContentTypeNosniff=true"
+      - "traefik.http.middlewares.securedheaders.headers.BrowserXssFilter=true"
+      - "traefik.http.middlewares.securedheaders.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.securedheaders.headers.STSSeconds=315360000"
+
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - proxy
+    volumes:
+      - ./data/acme.json:/etc/traefik/acme.json:rw
+      #- /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./logs/traefik.log:/var/log/docker/traefik.log
+      - ./data/traefik_conf.yaml:/traefik_conf.yaml 
+    #environment: #Uncomment if using any ACME dnsChallenge Below
+#Uncomment and Fill Below if using Cloudflare DNS for ACME dnsChallenge
+      #- CF_API_EMAIL=
+      #- CF_API_KEY=
+#Uncomment and Fill Below if using DNSMadeEasy DNS for ACME dnsChallenge
+      #- DNSMADEEASY_API_KEY=
+      #- DNSMADEEASY_API_SECRET=
+#Uncomment and Fill Below if using GoDaddy DNS for ACME dnsChallenge
+      #- GODADDY_API_KEY=
+      #- GODADDY_API_SECRET=
+        
+    
+    restart: unless-stopped
+
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: socket-proxy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      CONTAINERS: 1
+    networks:
+      - proxy

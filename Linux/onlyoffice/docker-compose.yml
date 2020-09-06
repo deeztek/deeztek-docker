@@ -1,0 +1,128 @@
+version: '2'
+services:
+  onlyoffice-documentserver-data:
+    container_name: onlyoffice-documentserver-data
+    image: onlyoffice/documentserver:latest
+    environment:
+      - ONLYOFFICE_DATA_CONTAINER=true
+      - DB_TYPE=postgres
+      - DB_HOST=onlyoffice-postgresql
+      - DB_PORT=5432
+      - DB_NAME=onlyoffice
+      #Set the DB_USER and DB_PWD below to the POSTGRES_USER and the POSTGRES_PASSWORD values of the onlyoffice-postgresql container below
+      - DB_USER=onlyoffice
+      - DB_PWD=somepassword
+      - AMQP_URI=amqp://guest:guest@onlyoffice-rabbitmq
+      - REDIS_SERVER_HOST=onlyoffice-redis
+      - REDIS_SERVER_PORT=6379
+      # Uncomment strings below to enable the JSON Web Token validation.
+      #- JWT_ENABLED=true
+      #- JWT_SECRET=secret
+      #- JWT_HEADER=Authorization
+      #- JWT_IN_BODY=true
+    stdin_open: true
+    restart: always
+    networks:
+      - onlyoffice
+    volumes:
+       - /etc/onlyoffice
+       - /var/www/onlyoffice/Data
+       - /var/log/onlyoffice
+       - /var/lib/onlyoffice/documentserver/App_Data/cache/files
+       - /var/www/onlyoffice/documentserver-example/public/files
+       - /usr/share/fonts
+
+  onlyoffice-documentserver:
+    image: onlyoffice/documentserver:latest
+    depends_on:
+      - onlyoffice-documentserver-data
+      - onlyoffice-postgresql
+      - onlyoffice-redis
+      - onlyoffice-rabbitmq
+    environment:
+      - ONLYOFFICE_DATA_CONTAINER_HOST=onlyoffice-documentserver-data
+      - BALANCE=uri depth 3
+      - EXCLUDE_PORTS=443
+      - HTTP_CHECK=GET /healthcheck
+      - EXTRA_SETTINGS=http-check expect string true
+      # Uncomment the string below to redirect HTTP request to HTTPS request.
+      #- FORCE_SSL=true
+    stdin_open: true
+    restart: always
+    networks:
+      - onlyoffice
+      - proxy
+    expose:
+      - '80'
+    volumes_from:
+     - onlyoffice-documentserver-data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.onlyoffice.entrypoints=http"
+      - "traefik.http.routers.onlyoffice.rule=Host(`onlyoffice.domain.tld`)"
+      - "traefik.http.routers.onlyoffice.middlewares=remote-https-redirect"
+
+      - "traefik.http.routers.onlyoffice-secure.entrypoints=https"
+      - "traefik.http.routers.onlyoffice-secure.rule=Host(`onlyoffice.domaintld`)"
+      - "traefik.http.routers.onlyoffice-secure.tls=true"
+      #- "traefik.http.routers.onlyoffice-secure.tls.certresolver=le"
+      - "traefik.http.routers.onlyoffice-secure.service=onlyoffice"
+
+      # Service definition
+      - "traefik.http.services.onlyoffice.loadbalancer.server.port=80"
+
+      # Middleware definitions
+      - "traefik.http.middlewares.onlyoffice-https-redirect.redirectscheme.scheme=https"
+
+      # Watchtower
+      - "com.centurylinklabs.watchtower.enable=true"
+
+
+  onlyoffice-redis:
+    container_name: onlyoffice-redis
+    image: redis
+    restart: always
+    networks:
+     - onlyoffice
+    expose:
+      - '6379'
+
+      onlyoffice-rabbitmq:
+        container_name: onlyoffice-rabbitmq
+        image: rabbitmq
+        restart: always
+        networks:
+         - onlyoffice
+        expose:
+          - '5672'
+    
+      onlyoffice-postgresql:
+        container_name: onlyoffice-postgresql
+        image: postgres:9.5
+        environment:
+          - POSTGRES_DB=onlyoffice
+          #Set the POSTGRES_USER and the POSTGRES_PASSWORD below to the DB_USER and DB_PWD values of the onlyoffice-documentserver-data container above
+          - POSTGRES_USER=onlyoffice
+          - POSTGRES_PASSWORD=somepassword
+        networks:
+          - onlyoffice
+        restart: always
+        expose:
+          - '5432'
+        volumes:
+          - postgresql_data:/var/lib/postgresql
+    
+    networks:
+      onlyoffice:
+        driver: 'bridge'
+    
+      proxy:
+        external: true
+    
+    
+    volumes:
+      postgresql_data:
+    

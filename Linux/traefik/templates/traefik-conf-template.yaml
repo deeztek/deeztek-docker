@@ -1,0 +1,46 @@
+tls:
+    options:
+      default:
+        minVersion: VersionTLS12
+        curvePreferences:
+          - secp521r1
+          - secp384r1
+        sniStrict: false
+
+#Uncomment entries below in order to proxy traffic to host outside the docker environment. Replace "svcname" with the name of your service and fill in the required Host and URL parameters
+
+
+#http:
+  #routers:
+    #svcname:
+      #entryPoints:
+        #- "http"
+      #rule: "Host(`host.domain.tld`)"
+
+      #middlewares:
+        #- "svcname-https-redirect"
+      #service: svcname
+
+    #svcname-secure:
+      #entryPoints:
+        #- "https"
+      #rule: "Host(`host.domain.tld`)"
+
+      #tls:
+        #certResolver: le
+      #service: svcname
+
+  #services:
+    #svcname:
+      #loadBalancer:
+        #servers:
+          #- url: "http://192.168.xxx.xxx:8080"
+        #passHostHeader: true
+
+  #middlewares:
+    #svcname-https-redirect:
+      #redirectScheme:
+        #scheme: https
+
+
+  

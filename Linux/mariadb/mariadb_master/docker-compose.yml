@@ -1,0 +1,45 @@
+version: '2'
+
+services:
+  mariadb:
+    image: 'bitnami/mariadb:latest'
+    container_name: dbserver
+    ports:
+      - '3306:3306'
+    volumes:
+      - /mnt/master_dbserver/data:/bitnami/mariadb
+      - /mnt/master_dbserver/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
+      - db_backups:/db_backups
+    environment:
+      - "TZ=America/New_York"
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_PASSWORD=maria_db_root_password
+      - MARIADB_REPLICATION_MODE=master
+      - MARIADB_REPLICATION_USER=repl_user
+      - MARIADB_REPLICATION_PASSWORD=repl_user_password
+      - BITNAMI_DEBUG=true
+    restart: unless-stopped
+
+  ofelia:
+    image: 'mcuadros/ofelia:latest'
+    container_name: dbserver_cron
+    environment:
+      - "TZ=America/New_York"
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config/config.ini:/etc/ofelia/config.ini
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+volumes:
+  db_backups:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.xxx.xxx.xxx,nolock,soft,rw
+      device: :/mnt/dbbackups

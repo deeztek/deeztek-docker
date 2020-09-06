@@ -1,0 +1,70 @@
+version: "3"
+
+networks:
+  proxy:
+    external: true
+
+services:
+  softethervpn:
+    image: siomiz/softethervpn
+    container_name: softethervpn
+    environment:
+      environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - UMASK_SET=022 #optional
+    volumes:
+      - ./softether_config:/usr/vpnserver
+      - ./certs:/certs
+    networks:
+      - proxy
+    cap_add:
+      - NET_ADMIN
+    ports:
+      #- 443:443/tcp
+      - 992:992/tcp
+      - 1194:1194/udp
+      - 5555:5555/tcp
+      - 1701:1701/udp
+      - 500:500/udp
+      - 4500:4500/udp
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.services.sofethervpn.loadBalancer.server.port=443"
+      - "traefik.tcp.routers.softethervpn.entrypoints=https"
+      - "traefik.tcp.routers.softethervpn.rule=HostSNI(`softether.$DOMAIN`)"
+      - "traefik.http.routers.softethervpn.entrypoints=https"
+      - "traefik.http.routers.softethervpn.rule=Host(`softether.$DOMAIN`)"
+      - "traefik.http.routers.softethervpn.tls=true"
+      #- "traefik.http.routers.softethervpn.tls.certresolver=le"
+      - "traefik.tcp.routers.softethervpn.tls.passthrough=true"
+
+    restart: unless-stopped
+
+
+   certs:
+      container_name: traefik-cert-dumper
+      restart: always
+      image: ldez/traefik-certs-dumper:latest
+      volumes:
+      - /path/to/trafeik/acme.json:/app/data/acme.json
+      - ./certs:/app/certs:rw
+      #The --version v2 string below is set for Traefik version 2.
+      command: file --version v2 --source /app/data/acme.json --dest /app/certs --domain-subdir --crt-name=fullchain --key-name=privkey --watch
+
+  ofelia:
+    image: mcuadros/ofelia:latest
+    container_name: softether_cert_import_cron
+    environment:
+      - TZ=$TZ
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config:/etc/ofelia
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped

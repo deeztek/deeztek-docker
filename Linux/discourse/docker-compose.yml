@@ -1,0 +1,153 @@
+version: '2'
+
+networks:
+  proxy:
+    external: true
+
+  discourse:
+    internal: true
+
+services:
+  postgresql:
+    image: 'bitnami/postgresql:11'
+    container_name: 'discourse_postgres'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - 'postgresql_data:/bitnami/postgresql'
+    networks:
+      - discourse
+    restart: unless-stopped
+    labels: 
+    # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+ 
+  redis:
+    image: 'bitnami/redis:5.0'
+    container_name: 'discourse_redis'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - 'redis_data:/bitnami'
+    networks:
+      - discourse
+    restart: unless-stopped
+    labels:
+    # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+
+  discourse:
+    image: 'bitnami/discourse:latest'
+    container_name: 'discourse'
+    ports:
+      - '3000'
+    depends_on:
+      - postgresql
+      - redis
+    volumes:
+      - 'discourse_data:/bitnami'
+    networks:
+      - proxy
+      - discourse
+
+    restart: unless-stopped
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+    
+      # Routers
+      - "traefik.http.routers.discourse.entrypoints=http"
+      - "traefik.http.routers.discourse.rule=Host(`community.$DOMAIN`)"
+      - "traefik.http.routers.discourse.middlewares=discourse-https-redirect"
+      - "traefik.http.routers.discourse-secure.entrypoints=https"
+      - "traefik.http.routers.discourse-secure.rule=Host(`community.$DOMAIN`)"
+      - "traefik.http.routers.discourse-secure.tls=true"
+      #- "traefik.http.routers.discourse-secure.tls.certresolver=le"
+      - "traefik.http.routers.discourse-secure.service=discourse"
+      #- "traefik.http.routers.discourse-secure.middlewares=add-discourse"
+    
+      # Service definition
+      - "traefik.http.services.discourse.loadbalancer.server.port=3000"
+    
+      # Middleware definitions
+      - "traefik.http.middlewares.discourse-https-redirect.redirectscheme.scheme=https"
+      #- "traefik.http.middlewares.add-discourse.addPrefix.prefix=/interface"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+    
+
+    environment:
+      - POSTGRESQL_HOST=$POSTGRESQLHOST
+      - POSTGRESQL_ROOT_USER=$POSTGRESQLROOTUSER
+      - POSTGRESQL_CLIENT_CREATE_DATABASE_NAME=$POSTGRESQLCLIENTCREATEDATABASENAME
+      - POSTGRESQL_CLIENT_CREATE_DATABASE_USERNAME=$POSTGRESQLCLIENTCREATEDATABASEUSERNAME
+      - POSTGRESQL_CLIENT_CREATE_DATABASE_PASSWORD=$POSTGRESQLCLIENTCREATEDATABASEPASSWORD
+      - DISCOURSE_POSTGRESQL_NAME=$DISCOURSEPOSTGRESQLNAME
+      - DISCOURSE_POSTGRESQL_USERNAME=$DISCOURSEPOSTGRESQLUSERNAME
+      - DISCOURSE_POSTGRESQL_PASSWORD=$DISCOURSEPOSTGRESQLPASSWORD
+      - DISCOURSE_HOSTNAME=$DISCOURSEHOSTNAME
+      - DISCOURSE_USERNAME=$DISCOURSEUSERNAME
+      - DISCOURSE_PASSWORD=$DISCOURSEPASSWORD
+      - DISCOURSE_EMAIL=$DISCOURSEEMAIL
+      - DISCOURSE_SITENAME=$DISCOURSESITENAME
+      - SMTP_HOST=$SMTPHOST
+      - SMTP_PORT=$SMTPPORT
+      - SMTP_USER=$SMTPUSER
+      - SMTP_PASSWORD=$SMTPPASSWORD
+      - REDIS_HOST=discourse_redis
+  sidekiq:
+    image: 'bitnami/discourse:2'
+    container_name: 'discourse_sidekiq'
+    depends_on:
+      - discourse
+    volumes:
+      - 'sidekiq_data:/bitnami'
+    networks:
+      - discourse
+    restart: unless-stopped
+    labels:
+    # Watchtower
+      - "com.centurylinklabs.watchtower.enable=true"
+
+
+    command: 'nami start --foreground discourse-sidekiq'
+    environment:
+      - DISCOURSE_POSTGRESQL_NAME=$DISCOURSEPOSTGRESQLNAME
+      - DISCOURSE_POSTGRESQL_USERNAME=$DISCOURSEPOSTGRESQLUSERNAME
+      - DISCOURSE_POSTGRESQL_PASSWORD=$DISCOURSEPOSTGRESQLPASSWORD
+      - DISCOURSE_HOST=discourse
+      - DISCOURSE_PORT=3000
+      - DISCOURSE_HOSTNAME=$DISCOURSEHOSTNAME
+
+volumes:
+  postgresql_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/discourse/postgresql_data
+
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/discourse/postgresql_data
+
+  discourse_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/discourse/discourse_data
+
+  sidekiq_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/discourse/sidekiq_data
+

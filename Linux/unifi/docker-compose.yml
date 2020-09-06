@@ -1,0 +1,55 @@
+version: "2.1"
+services:  
+  unifi:
+    hostname: unifi
+    image: linuxserver/unifi-controller:latest
+    restart: unless-stopped
+    container_name: "unifi"
+    volumes:
+      - ./config:/config
+      #- unifi_backups:/unifi_backups
+    ports:
+      - 3478:3478/udp
+      - 10001:10001/udp
+      - 8080:8080/tcp
+      - 8081:8081/tcp
+      - 8443:8443/tcp
+      - 8880:8880/tcp
+      - 6789:6789/tcp
+    #networks:
+      #- proxy
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - MEM_LIMIT=1024M #optional
+    labels:
+      - "traefik.enable=false"
+      - "traefik.docker.network=proxy"
+      - "traefik.tags=frontend"
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.admin.backend=unifi"
+      - "traefik.admin.frontend.rule=Host:unifi.${DOMAIN}"
+      - "traefik.admin.port=8443"
+      - "traefik.admin.protocol=https"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+
+#networks:
+  #proxy:
+    #external: true
+
+
+#volumes:
+  #unifi_backups:
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.xxx.xxxx,nolock,soft,rw
+      #device: :/mnt/backups

@@ -1,0 +1,65 @@
+version: "2"
+services:
+  jackett:
+    image: linuxserver/jackett
+    container_name: jackett
+    restart: unless-stopped
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - UMASK_SET=022 #optional
+    #user: "999"
+    volumes:
+      - ./config:/config
+      - deluge_torrents:/torrents
+    ports:
+      #- 9117:9117
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      #Routers
+      - "traefik.http.routers.jacket.entrypoints=http"
+      - "traefik.http.routers.jacket.rule=Host(`jacket.$DOMAIN`)"
+      - "traefik.http.routers.jacket.middlewares=jacket-https-redirect"
+      - "traefik.http.routers.jacket-secure.entrypoints=https"
+      - "traefik.http.routers.jacket-secure.rule=Host(`jacket.$DOMAIN`)"
+      #- "traefik.http.routers.jacket-secure.tls=true"
+      - "traefik.http.routers.jacket-secure.tls.certresolver=le"
+      - "traefik.http.routers.jacket-secure.service=jacket"
+
+      #Service definition
+      - "traefik.http.services.jacket.loadbalancer.server.port=9117"
+
+      #Middleware definitions
+      - "traefik.http.middlewares.jacket-https-redirect.redirectscheme.scheme=https"
+
+      #Authenticate with Organizr
+      #- "traefik.http.routers.jacket-secure.middlewares=auth"
+      #- "traefik.http.middlewares.auth.forwardauth.address=https://organizr.$DOMAIN/api/?v1/auth&group=1"
+
+      #Authelia authentication
+      #- "traefik.http.routers.jacket-secure.middlewares=authelia@docker"
+      
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+
+# Volumes for persisting data, see https://docs.docker.com/engine/admin/volumes/volumes/
+volumes:
+  deluge_torrents:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/deluge/torrents
+
+networks:
+  proxy:
+    external: true
+
+  
+
+

@@ -1,0 +1,75 @@
+version: "2"
+services:
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - UMASK_SET=022 #optional
+    volumes:
+      - ./config:/config
+      - radarr_movies:/movies
+      - sabnzbd_movies:/sabnzbd_movies
+      - deluge_movies:/deluge_movies
+    networks:
+      - proxy
+    ports:
+      #- 7878:7878
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      
+      #Routers
+      - "traefik.http.routers.radar.entrypoints=http"
+      - "traefik.http.routers.radar.rule=Host(`radar.$DOMAIN`)"
+      - "traefik.http.routers.radar.middlewares=radar-https-redirect"
+      - "traefik.http.routers.radar-secure.entrypoints=https"
+      - "traefik.http.routers.radar-secure.rule=Host(`radar.$DOMAIN`, `radarr.$DOMAIN`)"
+      - "traefik.http.routers.radar-secure.tls=true"
+      #- "traefik.http.routers.radar-secure.tls.certresolver=le"
+      - "traefik.http.routers.radar-secure.service=radar"
+      
+      #Service definition
+      - "traefik.http.services.radar.loadbalancer.server.port=7878"
+     
+      #Middleware definitions
+      - "traefik.http.middlewares.radar-https-redirect.redirectscheme.scheme=https"
+      
+      #Authenticate with Organizr
+      #- "traefik.http.routers.radar-secure.middlewares=auth"
+      #- "traefik.http.middlewares.auth.forwardauth.address=https://organizr.$DOMAIN/api/?v1/auth&group=1"
+
+      #Authelia authentication
+      #- "traefik.http.routers.radar-secure.middlewares=authelia@docker"
+      
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+volumes:
+
+  radarr_movies:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/shares/Videos
+
+  sabnzbd_movies:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/sabnzbd/complete
+
+  deluge_movies:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/deluge/complete
+ 
+networks:
+  proxy:
+    external: true  
+
+

@@ -1,0 +1,46 @@
+version: '2'
+
+networks:
+  proxy:
+    external: true
+version: '2'
+
+
+services:
+  portainer:
+    image: 'portainer/portainer'
+    container_name: portainer
+    #networks:
+      #- proxy
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./portainer_data:/data
+      - ./certs:/certs
+
+    #command:
+      # uncomment --ssl, --sslcert and --sslkey below to enable SSL certificates. Generate certificate and key with commands below:
+      # openssl genrsa -out portainer.key 2048
+      # openssl ecparam -genkey -name secp384r1 -out portainer.key
+      # openssl req -new -x509 -sha256 -key portainer.key -out portainer.crt -days 3650
+      
+      #--ssl
+      #--sslcert /certs/portainer.crt
+      #--sslkey /certs/portainer.key
+      
+    ports: 
+      - 9000:9000
+  
+    restart: always
+# uncomment below if you are planning to use NFS storage for portainer data
+#volumes:
+  #portainer_data:
+    #driver: local
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.168.xxx.xxx,nolock,soft,rw
+      #device: :/mnt/pool1/docker/portainer-data
+
+
+      
+      

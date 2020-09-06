@@ -1,0 +1,22 @@
+version: '2'
+
+services:
+  mariadb:
+    image: 'bitnami/mariadb:latest'
+    container_name: dbserver
+    ports:
+      - '3306:3306'
+    volumes:
+      - /mnt/slave_dbserver/data:/bitnami/mariadb
+      - /mnt/slave_dbserver/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - TZ=America/New_York
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_PASSWORD=mariadb_root_password
+      - MARIADB_REPLICATION_MODE=slave
+      - MARIADB_REPLICATION_USER=repl_user
+      - MARIADB_REPLICATION_PASSWORD=repl_user_password
+      - MARIADB_MASTER_HOST=192.168.xxx.xxx
+      - MARIADB_MASTER_PORT_NUMBER=3306
+      - MARIADB_MASTER_ROOT_PASSWORD=master_dbserver_root_password

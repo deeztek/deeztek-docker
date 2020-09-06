@@ -1,0 +1,22 @@
+api:
+  dashboard: true
+
+entryPoints:
+  http:
+    address: ":80"
+  https:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "tcp://socket-proxy:2375"
+    watch: true
+    exposedByDefault: false
+
+certificatesResolvers:
+  http:
+    acme:
+      email: ACME-EMAIL
+      storage: acme.json
+      httpChallenge:
+        entryPoint: http

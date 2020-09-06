@@ -1,0 +1,79 @@
+version: "2"
+services:
+  sonarr:
+    image: hotio/sonarr:phantom
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - UMASK_SET=022 #optional
+    #user: "999"
+    volumes:
+      - ./config:/config
+      - sonarr_tv:/tv
+      - sabnzbd_tv:/sabnzbd_tv
+      - deluge_tv:/deluge_tv     
+    networks:
+      - proxy
+    ports:
+      #- 8989:8989
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.sonar.entrypoints=http"
+      - "traefik.http.routers.sonar.rule=Host(`sonar.$DOMAIN`)"
+      - "traefik.http.routers.sonar.middlewares=sonar-https-redirect"
+      - "traefik.http.routers.sonar-secure.entrypoints=https"
+      - "traefik.http.routers.sonar-secure.rule=Host(`sonar.$DOMAIN`, `sonarr.$DOMAIN`)"
+      - "traefik.http.routers.sonar-secure.tls=true"
+      #- "traefik.http.routers.sonar-secure.tls.certresolver=le"
+      - "traefik.http.routers.sonar-secure.service=sonar"
+
+      #Service definition
+      - "traefik.http.services.sonar.loadbalancer.server.port=8989"
+
+      #Middleware definitions
+      - "traefik.http.middlewares.sonar-https-redirect.redirectscheme.scheme=https"
+
+      #Authenticate with Organizr
+      #- "traefik.http.routers.sonar-secure.middlewares=auth"
+      #- "traefik.http.middlewares.auth.forwardauth.address=https://organizr.$DOMAIN/api/?v1/auth&group=1"
+
+      #Authelia authentication
+      #- "traefik.http.routers.sonar-secure.middlewares=authelia@docker"
+
+ 
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+
+
+volumes:
+
+  sonarr_tv:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/shares/tv
+
+  sabnzbd_tv:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/sabnzbd/complete
+  deluge_tv:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/deluge/complete
+
+networks:
+  proxy:
+    external: true
+
+
+

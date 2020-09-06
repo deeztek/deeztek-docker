@@ -1,0 +1,4 @@
+duo-api-hostname: DUOAPIHOSTNAME
+duo-integration-key: DUOINTEGRATIONKEY
+duo-secret-key: DUOSECRETKEY
+duo-application-key: DUOAPPLICATIONKEY

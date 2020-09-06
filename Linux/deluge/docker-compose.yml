@@ -1,0 +1,64 @@
+version: "2"
+services:
+  deluge:
+    image: linuxserver/deluge
+    container_name: deluge
+    restart: unless-stopped
+    #network_mode: host
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - UMASK_SET=022 #optional
+      - DELUGE_LOGLEVEL=error #optional
+    volumes:
+      - ./config:/config
+      - deluge_downloads:/downloads
+    networks:
+      - proxy
+    ports:
+      #- 8112:8112
+      - 45540:45540 #ensure this port is set in Deluge under Preferences --> Network --> Incoming Port (ensure you uncheck "Use Random port") AND is open in your firewall both tcp/udp
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      #Routers
+      - "traefik.http.routers.deluge.entrypoints=http"
+      - "traefik.http.routers.deluge.rule=Host(`deluge.$DOMAIN`)"
+      - "traefik.http.routers.deluge.middlewares=deluge-https-redirect"
+      - "traefik.http.routers.deluge-secure.entrypoints=https"
+      - "traefik.http.routers.deluge-secure.rule=Host(`deluge.$DOMAIN`)"
+      - "traefik.http.routers.deluge-secure.tls=true"
+      #- "traefik.http.routers.deluge-secure.tls.certresolver=le"
+      - "traefik.http.routers.deluge-secure.service=deluge"
+      
+      #Service definitions
+      - "traefik.http.services.deluge.loadbalancer.server.port=8112"
+
+      #Middleware deinitions
+      - "traefik.http.middlewares.deluge-https-redirect.redirectscheme.scheme=https"
+      
+      #Authenticate with Organizr
+      #- "traefik.http.routers.deluge-secure.middlewares=auth"
+      #- "traefik.http.middlewares.auth.forwardauth.address=https://organizr.$DOMAIN/api/?v1/auth&group=1"
+
+      #Authelia authentication
+      #- "traefik.http.routers.deluge-secure.middlewares=authelia@docker"
+      
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+
+volumes:
+
+  deluge_downloads:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/downloads/deluge
+
+networks:
+  proxy:
+    external: true
+

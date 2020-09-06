@@ -1,0 +1,79 @@
+version: "2"
+services:
+  lidarr:
+    image: linuxserver/lidarr
+    container_name: lidarr
+    restart: unless-stopped
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - UMASK_SET=022 #optional
+    #user: "999"
+    volumes:
+      - ./config:/config
+      - lidarr_music:/music
+      - sabnzbd_music:/sabnzbd_music
+      - deluge_music:/deluge_music
+    networks:
+      - proxy
+    ports:
+      #- 8686:8686    
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      #Routers
+      - "traefik.http.routers.lidar.entrypoints=http"
+      - "traefik.http.routers.lidar.rule=Host(`lidar.$DOMAIN`)"
+      - "traefik.http.routers.lidar.middlewares=lidar-https-redirect"
+      - "traefik.http.routers.lidar-secure.entrypoints=https"
+      - "traefik.http.routers.lidar-secure.rule=Host(`lidar.$DOMAIN`, `lidarr.$DOMAIN`)"
+      - "traefik.http.routers.lidar-secure.tls=true"
+      #- "traefik.http.routers.lidar-secure.tls.certresolver=le"
+      - "traefik.http.routers.lidar-secure.service=lidar"
+      
+      #Service definitions
+      - "traefik.http.services.lidar.loadbalancer.server.port=8686"
+
+      #Middlware definitions
+      - "traefik.http.middlewares.lidar-https-redirect.redirectscheme.scheme=https"
+
+      #Authenticate with Organizr
+      #- "traefik.http.routers.lidar-secure.middlewares=auth"
+      #- "traefik.http.middlewares.auth.forwardauth.address=https://organizr.$DOMAIN/api/?v1/auth&group=1"
+
+      #Authelia authentication
+      #- "traefik.http.routers.lidar-secure.middlewares=authelia@docker"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+ 
+# Volumes for persisting data, see https://docs.docker.com/engine/admin/volumes/volumes/
+volumes:
+
+  lidarr_music:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/shares/Music
+
+  sabnzbd_music:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/sabnzbd/complete
+
+  deluge_music:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/deluge/complete
+      
+networks:
+  proxy:
+    external: true
+
+  
+
+

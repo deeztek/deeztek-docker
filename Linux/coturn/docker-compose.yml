@@ -1,0 +1,17 @@
+version: '2'
+
+services:
+  coturn:
+    image: 'instrumentisto/coturn'
+    container_name: coturn
+    network_mode: "host"
+
+    volumes:
+      - ./config/turnserver.conf:/etc/coturn/turnserver.conf
+
+    restart: always
+
+
+
+      
+      

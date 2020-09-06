@@ -1,0 +1,73 @@
+version: "2.1"
+services:
+  airsonic:
+    image: airsonicadvanced/airsonic-advanced
+    container_name: airsonic
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - TZ=$TZ
+      - CONTEXT_PATH=/
+    volumes:
+      - /opt/airsonic/config:/var/airsonic
+      - airsonic_books:/var/books
+      - airsonic_music:/var/music
+      - airsonic_podcasts:/var/podcast
+    networks:
+      - proxy
+    ports:
+      #- 4040:4040
+    restart: unless-stopped
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.airsonic.entrypoints=http"
+      - "traefik.http.routers.airsonic.rule=Host(`sonic.$DOMAIN`)"
+      - "traefik.http.routers.airsonic.middlewares=airsonic-https-redirect"
+      - "traefik.http.routers.airsonic-secure.entrypoints=https"
+      - "traefik.http.routers.airsonic-secure.rule=Host(`sonic.$DOMAIN`)"
+      - "traefik.http.routers.airsonic-secure.tls=true"
+      #- "traefik.http.routers.airsonic-secure.tls.certresolver=le"
+      - "traefik.http.routers.airsonic-secure.service=airsonic"
+
+      # Service definition
+      - "traefik.http.services.airsonic.loadbalancer.server.port=4040"
+
+      # Middleware definitions
+      - "traefik.http.middlewares.airsonic-https-redirect.redirectscheme.scheme=https"
+
+      - "traefik.passHostHeader=true"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+volumes:
+
+
+  airsonic_podcasts:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/shares/podcasts
+
+
+  airsonic_books:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/shares/Books
+
+  airsonic_music:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.xxx.xxx,nolock,soft,rw
+      device: :/mnt/shares/Music
+
+networks:
+  proxy:
+    external: true
+
+

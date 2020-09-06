@@ -1,0 +1,101 @@
+version: "3"
+
+networks:
+  proxy:
+    external: true
+  matomo:
+    internal: true
+
+services:
+  matomo_mariadb:
+    image: 'bitnami/mariadb:latest'
+    container_name: matomo_mariadb
+    environment:
+      - PUID=$PUID
+      - GUID=$GUID
+      - MARIADB_ROOT_PASSWORD=$MARIADBROOTPASSWORD
+      - MARIADB_DATABASE=$MATOMODATABASENAME
+      - MARIADB_USER=$MATOMODATABASEUSER
+      - MARIADB_PASSWORD=$MATOMODATABASEPASSWORD
+      - MARIADB_EXTRA_FLAGS=--max_allowed_packet=64MB
+    networks:
+      - matomo
+    restart: unless-stopped
+    volumes:
+      - './mariadb_data:/bitnami'
+      #- db_backups:/db_backups
+      
+  matomo:
+    image: 'bitnami/matomo:latest'
+    container_name: matomo
+    environment:
+      - MATOMO_USERNAME=$MATOMOUSERNAME
+      - MATOMO_PASSWORD=$MATOMOPASSWORD
+      - MATOMO_EMAIL=$MATOMOEMAIL
+      - MARIADB_HOST=matomo_mariadb
+      - MARIADB_PORT_NUMBER=3306
+      - MATOMO_DATABASE_NAME=$MATOMODATABASENAME
+      - MATOMO_DATABASE_USER=$MATOMODATABASEUSER
+      - MATOMO_DATABASE_PASSWORD=$MATOMODATABASEPASSWORD
+    networks:
+      - proxy
+      - matomo
+    #ports:
+      #- '80:80'
+      #- '443:443'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+          
+      # Routers
+      - "traefik.http.routers.matomo.entrypoints=http"
+      - "traefik.http.routers.matomo.rule=Host(`matomo.$DOMAIN`)"
+      - "traefik.http.routers.matomo.middlewares=matomo-https-redirect"
+      - "traefik.http.routers.matomo-secure.entrypoints=https"
+      - "traefik.http.routers.matomo-secure.rule=Host(`matomo.$DOMAIN`)"
+      - "traefik.http.routers.matomo-secure.tls=true"
+      #- "traefik.http.routers.matomo-secure.tls.certresolver=le"
+      - "traefik.http.routers.matomo-secure.service=matomo"
+          
+      # Service definition
+      - "traefik.http.services.matomo.loadbalancer.server.port=8080"
+          
+      # Middleware definitions
+      - "traefik.http.middlewares.matomo-https-redirect.redirectscheme.scheme=https"
+          
+      - "traefik.passHostHeader=true"
+          
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped      
+    depends_on:
+      - matomo_mariadb
+    volumes:
+      - './matomo_data:/bitnami'
+
+  ofelia:
+    image: 'mcuadros/ofelia:latest'
+    container_name: matomo_mariadb_cron
+    environment:
+      - "TZ=$TZ"
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config/config.ini:/etc/ofelia/config.ini
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+
+#Do not enable below unless you are connecting to an existing NFS share
+#volumes:
+  #db_backups:
+    #driver: local
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.xxx.xxx.xxx,nolock,soft,rw
+      #device: :/mnt/dbbackups
+
+    

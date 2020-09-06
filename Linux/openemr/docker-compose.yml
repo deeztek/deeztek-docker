@@ -1,0 +1,117 @@
+# Use admin/pass as user/password credentials to login to openemr (from OE_USER and OE_PASS below)
+# MYSQL_HOST and MYSQL_ROOT_PASS are required for openemr
+# MYSQL_USER, MYSQL_PASS, OE_USER, MYSQL_PASS are optional for openemr and
+#   if not provided, then default to openemr, openemr, admin, and pass respectively.
+version: '3.1'
+
+networks:
+
+ proxy:
+    external: true
+
+
+services:
+  mysql:
+    restart: always
+    image: mariadb:10.4
+    container_name: openemr_mariadb
+    command: ['mysqld','--character-set-server=utf8']
+    volumes:
+      - databasevolume:/var/lib/mysql
+      - db_backups:/db_backups
+    networks:
+      - proxy
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+
+  openemr:
+    restart: always
+    image: openemr/openemr:5.0.2
+    container_name: openemr
+    #ports:
+    #- 80:80
+    #- 443:443
+    volumes:
+      - logvolume01:/var/log
+      - sitevolume:/var/www/localhost/htdocs/openemr/sites
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASS: root
+      MYSQL_USER: openemr
+      MYSQL_PASS: openemr_mysql_password
+      OE_USER: admin
+      OE_PASS: openemr_password
+    depends_on:
+      - mysql
+    networks:
+      - proxy
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.openemr.entrypoints=http"
+      - "traefik.http.routers.openemr.rule=Host(`openemr.domain.tld`)"
+      - "traefik.http.routers.openemr.middlewares=openemr-https-redirect"
+
+      - "traefik.http.routers.openemr-secure.entrypoints=https"
+      - "traefik.http.routers.openemr-secure.rule=Host(`openemr.domain.tld`)"
+      - "traefik.http.routers.openemr-secure.tls=true"
+      #- "traefik.http.routers.openemr-secure.tls.certresolver=le"
+      - "traefik.http.routers.openemr-secure.service=openemr"
+      #- "traefik.http.routers.openemr-secure.middlewares=add-openemr"
+
+      # Service definition
+      - "traefik.http.services.openemr.loadbalancer.server.port=80"
+
+      # Middleware definitions
+      - "traefik.http.middlewares.openemr-https-redirect.redirectscheme.scheme=https"
+      #- "traefik.http.middlewares.add-openemr.addPrefix.prefix=/interface/login/login.php?site=default"
+
+
+  ofelia:
+    image: 'mcuadros/ofelia:latest'
+    container_name: openemrmariadb_cron
+    environment:
+      - "TZ=America/New_York"
+    volumes:
+      # the ofelia config file
+      - ./ofelia/config.ini:/etc/ofelia/config.ini
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./logs:/tmp/logs
+    restart: unless-stopped
+
+volumes:
+  logvolume01:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/logs
+
+  sitevolume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/site
+
+  databasevolume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/database
+
+  db_backups:
+    driver_opts:
+      type: cifs
+      o: vers=2.0,mfsymlinks,username=backups_username,password=backups_password,domain=DOMAIN,file_mode=0777,dir_mode=0777,iocharset=utf8
+      device: "//192.168.xxx.xxx/backups/openemrdata"
+

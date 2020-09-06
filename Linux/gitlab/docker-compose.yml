@@ -1,0 +1,109 @@
+version: "3.7"
+
+networks:
+
+ proxy:
+    external: true
+
+
+services:
+
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest'
+    container_name: gitlab
+    restart: always
+    hostname: 'gitlab.domain.tld'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        gitlab_rails['gitlab_email_from'] = 'postmaster@domain.tld'
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = "mail.domain.tld"
+        gitlab_rails['smtp_port'] = 25
+
+    #ports:
+    #- '80:80'
+    #- '443:443'
+    #- '22:22'
+
+    networks:
+    - proxy
+
+    labels:
+    - "traefik.enable=true"
+    - "traefik.docker.network=proxy"
+
+    # Routers
+    - "traefik.http.routers.gitlab.entrypoints=http"
+    - "traefik.http.routers.gitlab.rule=Host(`gitlab.domain.tld`)"
+    - "traefik.http.routers.gitlab.middlewares=gitlab-https-redirect"
+
+    - "traefik.http.routers.gitlab-secure.entrypoints=https"
+    - "traefik.http.routers.gitlab-secure.rule=Host(`gitlab.domain.tld`)"
+    - "traefik.http.routers.gitlab-secure.tls=true"
+    #- "traefik.http.routers.gitlab-secure.tls.certresolver=le"
+    - "traefik.http.routers.gitlab-secure.service=gitlab"
+    #- "traefik.http.routers.gitlab-secure.middlewares=add-gitlab"
+
+    # Service definition
+    - "traefik.http.services.gitlab.loadbalancer.server.port=80"
+
+    # Middleware definitions
+    - "traefik.http.middlewares.gitlab-https-redirect.redirectscheme.scheme=https"
+    #- "traefik.http.middlewares.add-gitlab.addPrefix.prefix=/interface"
+    # Watchtower
+    #- "com.centurylinklabs.watchtower.enable=true"
+
+
+    volumes:
+    - 'gitlab_config:/etc/gitlab'
+    - 'gitlab_logs:/var/log/gitlab'
+    - 'gitlab_data:/var/opt/gitlab'
+    - 'gitlab_backups:/gitlab_backups'
+
+  ofelia:
+    image: 'mcuadros/ofelia:latest'
+    container_name: gitlab_cron
+    environment:
+    - "TZ=America/New_York"
+    volumes:
+    # the ofelia config file
+    - ./ofelia_config/config.ini:/etc/ofelia/config.ini
+    # your docker reg credentials
+    #- /home/centos/.docker/config.json:/root/.docker/config.json
+    # the docker socket so ofelia can docker run ...
+    - /var/run/docker.sock:/var/run/docker.sock
+    # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+    - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+
+volumes:
+  gitlab_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/gitlab/config
+
+  gitlab_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/gitlab/logs
+
+  gitlab_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/gitlab/data
+
+  gitlab_backups:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.xxx.xxx.xxx,nolock,soft,rw
+      device: :/mnt/pool1/gitlab_backups
+
+
+

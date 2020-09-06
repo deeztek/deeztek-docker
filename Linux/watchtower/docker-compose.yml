@@ -1,0 +1,30 @@
+version: '3'
+services:
+   watchtower:
+      container_name: watchtower
+      restart: always
+      image: containrrr/watchtower
+      environment:
+      - WATCHTOWER_NOTIFICATIONS=email
+      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=emailfrom@gmail.com
+      - WATCHTOWER_NOTIFICATION_EMAIL_TO=emailto@gmail.com
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=youremail.server
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=587
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=yes
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=emailfrom@gmail.com
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=yourpassword
+      - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
+      - TZ=America/New_York
+      volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+# The --label-enable option below tells watchtower to ONLY update containers that have a label of com.centurylinklabs.watchtower.enable=true like below:
+# labels:
+# Watchtower
+# - "com.centurylinklabs.watchtower.enable=true"
+
+
+      command:  --debug --interval 1800 --cleanup --label-enable
+
+  
+
