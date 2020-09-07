@@ -198,6 +198,24 @@ then
       exit
 fi
 
+#Output containers and their networks
+echo "${GREEN}Below is a listing of your containers and their associated networks.
+Locate the Traefik container network name and enter it in the prompt below.
+If you are not able to locate the Traefik container, ensure Traefik is configured
+and running ${RESET}"
+
+/usr/bin/docker container ls --format 'table {{.Names}}\t{{.Networks}}'  | boxes -d stone -p a2v1
+
+
+read -p "Enter the network name of your Traefik container from the listing above (Example: proxy):"  TRAEFIK_NETWORK
+
+if [ -z "$TRAEFIK_NETWORK" ]
+then
+   
+      echo "${RED}the network name of your Traefik container cannot be empty ${RESET}"
+      exit
+fi
+
 echo "Creating README.md file"
 echo "[`date +%m/%d/%Y-%H:%M`] Creating README.md file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
@@ -393,6 +411,19 @@ if [ $? -eq 0 ]; then
 else
         echo "${RED}Error Configuring /opt/guacamole/.env file with Guacamole LDAP Users Distinguished Name ${RESET}"
         echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/guacamole/.env file with Guacamole LDAP Users Distinguished Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+echo "Configuring /opt/guacamole/docker-compose.yml file with network name of Traefik container"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/docker-compose.yml file with network name of Traefik container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+/bin/sed -i -e "s,TRAEFIKNETWORK,${TRAEFIK_NETWORK},g" "/opt/guacamole/docker-compose.yml"
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Configuring /opt/guacamole/docker-compose.yml file with network name of Traefik container ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/docker-compose.yml file with network name of Traefik container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
         exit
 fi
 

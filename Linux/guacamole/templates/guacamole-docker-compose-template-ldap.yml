@@ -1,7 +1,7 @@
 version: "3"
 
 networks:
-  proxy:
+  TRAEFIKNETWORK:
     external: true
 
   guacamole:
@@ -40,7 +40,7 @@ services:
     container_name: guacamole_guacd
     restart: unless-stopped
     networks:
-      - proxy
+      - TRAEFIKNETWORK
       - guacamole
 
   guac:
@@ -52,13 +52,13 @@ services:
     #ports:
       #- "8080:8080"
     networks:
-      - proxy
+      - TRAEFIKNETWORK
       - guacamole
     links:
       - guacd:guacd
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
+      - "traefik.docker.network=TRAEFIKNETWORK"
   
       # Routers
       - "traefik.http.routers.guacamole.entrypoints=http"
@@ -68,7 +68,7 @@ services:
       - "traefik.http.routers.guacamole-secure.entrypoints=https"
       - "traefik.http.routers.guacamole-secure.rule=Host(`$HOST.$DOMAIN`)"
       - "traefik.http.routers.guacamole-secure.tls=true"
-      #- "traefik.http.routers.guacamole-secure.tls.certresolver=le"  #Uncomment to enable Lets Encrypt integration with Traefik
+      - "traefik.http.routers.guacamole-secure.tls.certresolver=le"  #Uncomment to enable Lets Encrypt integration with Traefik
       - "traefik.http.routers.guacamole-secure.service=guacamole"
       - "traefik.http.routers.guacamole-secure.middlewares=add-guacamole"
   
