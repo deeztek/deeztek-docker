@@ -25,7 +25,7 @@ Traefik can be easily installed in your existing Ubuntu 18.04 based Docker host 
 
 Git clone the Docker repository:
 
-`sudo git clone https://gitlab.deeztek.com/dedwards/docker.git`
+`sudo git clone https://github.com/deeztek/deeztek-docker.git`
 
 This will clone the repository and create a docker directory in the directory you ran the git clone command from.
 

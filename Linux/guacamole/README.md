@@ -13,7 +13,7 @@ More information on Apache Guacamole can be found at the URL below:
 
 **General Requirements**
 
-Apache Guacamole requires that you have a fully updated Ubuntu 18.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik](https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik).
+Apache Guacamole requires that you have a fully updated Ubuntu 18.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik](https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
 
 **Guacamole with Local User Authentication Requirements**
 
@@ -47,7 +47,7 @@ Guacamole can be easily installed in your existing Ubuntu 18.04 based Docker hos
 
 Git clone the Docker repository:
 
-`sudo git clone https://gitlab.deeztek.com/dedwards/docker.git`
+`sudo git clone https://github.com/deeztek/deeztek-docker.git`
 
 This will clone the repository and create a docker directory in the directory you ran the git clone command from.
 

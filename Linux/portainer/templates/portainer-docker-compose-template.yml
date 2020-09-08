@@ -1,32 +1,24 @@
 version: '2'
 
-networks:
-  proxy:
-    external: true
-version: '2'
-
-
 services:
   portainer:
     image: 'portainer/portainer'
     container_name: portainer
-    #networks:
-      #- proxy
-
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./portainer_data:/data
       - ./certs:/certs
 
-    #command:
+    command:
       # uncomment --ssl, --sslcert and --sslkey below to enable SSL certificates. Generate certificate and key with commands below:
       # openssl genrsa -out portainer.key 2048
       # openssl ecparam -genkey -name secp384r1 -out portainer.key
       # openssl req -new -x509 -sha256 -key portainer.key -out portainer.crt -days 3650
       
-      #--ssl
-      #--sslcert /certs/portainer.crt
-      #--sslkey /certs/portainer.key
+      --ssl
+      --sslcert /certs/portainer.crt
+      --sslkey /certs/portainer.key
       
     ports: 
       - 9000:9000
