@@ -27,11 +27,11 @@ Git clone the Docker repository:
 
 `sudo git clone https://github.com/deeztek/deeztek-docker.git`
 
-This will clone the repository and create a docker directory in the directory you ran the git clone command from.
+This will clone the repository and create a deeztek-docker directory in the directory you ran the git clone command from.
 
 Change to the traefik directory:
 
-`cd docker/Linux/traefik`
+`cd deeztek-docker/Linux/traefik`
 
 Run the following script as root:
 
