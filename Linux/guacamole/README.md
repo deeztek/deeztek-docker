@@ -49,11 +49,11 @@ Git clone the Docker repository:
 
 `sudo git clone https://github.com/deeztek/deeztek-docker.git`
 
-This will clone the repository and create a docker directory in the directory you ran the git clone command from.
+This will clone the repository and create a deeztek-docker directory in the directory you ran the git clone command from.
 
 Change to the guacamole directory:
 
-`cd docker/Linux/guacamole`
+`cd deeztek-docker/Linux/guacamole`
 
 For local user authentication run the following script as root:
 
