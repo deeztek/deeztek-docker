@@ -263,7 +263,18 @@ else
         exit
 fi
 
+echo "Configuring /opt/guacamole/.env file with Guacamole Subdomain"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/.env file with Guacamole Subdomain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
+/bin/sed -i -e "s/ACMEDOMAIN/${ACME_DOMAIN}/g" "/opt/guacamole/.env"
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Configuring /opt/guacamole/.env file with Guacamole Subdomain ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/guacamole/.env file with Guacamole Subdomain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
 
 echo "Configuring /opt/guacamole/docker-compose.yml file with network name of Traefik container"
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/docker-compose.yml file with network name of Traefik container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log

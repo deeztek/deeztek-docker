@@ -33,7 +33,7 @@ do
             break
             ;;
         "Install Guacamole with LDAP User Authentication")
-            /opt/aegis-waf/scripts/delete_site.sh
+            cd guacamole/ && bash ubuntu_1804_install_guacamole_ldap.sh
             break
             ;;
     

@@ -39,9 +39,9 @@ services:
     image: guacamole/guacd:latest
     container_name: guacamole_guacd
     restart: unless-stopped
-    networks:
-      - TRAEFIKNETWORK
+    networks:   
       - guacamole
+      - TRAEFIKNETWORK
 
   guac:
     image: guacamole/guacamole:latest

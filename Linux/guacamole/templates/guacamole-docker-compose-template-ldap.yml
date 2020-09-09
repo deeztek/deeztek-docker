@@ -52,8 +52,9 @@ services:
     #ports:
       #- "8080:8080"
     networks:
-      - TRAEFIKNETWORK
       - guacamole
+      - TRAEFIKNETWORK
+      
     links:
       - guacd:guacd
     labels:
