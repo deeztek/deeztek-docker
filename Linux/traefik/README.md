@@ -43,17 +43,45 @@ The script will install all required components and install Traefik on the **/op
 
 The Traefik dashboard can be accessed by browsing to **https://HOSTNAME.DOMAIN** where **HOSTNAME** is the Traefik hostname you specified and the **DOMAIN** is the subdomain you specified when you were prompted by the **ubuntu_1804_install_traefik.sh** install script.
 
-By default the Traefik installation is set to use the Let's Encrypt Staging servers to obtain certificates through the use of the following line in the **/opt/traefik/docker-compose.yml** file:
+By default the Traefik installation is set to use the Let's Encrypt Staging servers to obtain certificates for your containers through the use of the following line in the Traefik **/opt/traefik/docker-compose.yml** file:
 
 `- "--certificatesResolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"`
 
-Once a staging certificate has been successfully issued, comment out the line above to use the production Let's Encrypt servers.
+Additionally, all the containers in this repository have already been setup to use the Traefik Lets Encrypt provider through the use of the following Traefik label in their respective docker-compose.yml files where **CONTAINER** is the name of the service:
 
-Additionally, the Traefik installation is by default set to use ACME httpChallenge method to obtain certificates through the use of the following line in the **/opt/traefik/docker-compose.yml** file:
+`- "traefik.http.routers.CONTAINER-secure.tls.certresolver=le"`
+
+Once a Lets Encrypt staging certificate has been successfully issued for your container, follow the instructions below to switch to the Lets Encrypt production certificate environment:
+
+* Comment out by placing a **#** in front of the following line in **/opt/traefik/docker-compose** file:
+
+`- "--certificatesResolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"`
+
+* Delete the container staging certificate contents from the **/opt/traefik/data/acme.json** file.
+
+* Shutdown the Traefik container using the following command:
+
+`cd /opt/traefik && docker-compose down`
+
+* Start the Traefik container using the following command:
+
+`cd /opt/traefik && docker-compose up -d`
+
+* Shutdown and start any containers that need to get a Lets Encrypt production certificate using the following command where **/opt/CONTAINER** is the path and the name of the container:
+
+`cd /opt/CONTAINER && docker-compose down`
+`cd /opt/CONTAINER && docker-compose up -d`
+
+NOTE: Traefik is set by default to use ACME httpChallenge method to obtain certificates through the use of the following line in the **/opt/traefik/docker-compose.yml** file:
 
 `- "--certificatesResolvers.le.acme.httpChallenge.entryPoint=http"`
 
-If you wish to use ACME dnschallenge or ACME TLS challenge, comment out the ACME httpChallenge line from above and uncomment the appropriate lines(s) in the **/opt/traefik/docker-compose.yml** file. The **/opt/traefik/docker-compose.yml** file is extensively commented with instructions on how to implement the various ACME methods.
+If you wish to use ACME dnschallenge or ACME TLS challenge, comment out the ACME httpChallenge line from above and uncomment the appropriate lines(s) in the **/opt/traefik/docker-compose.yml** file. The **/opt/traefik/docker-compose.yml** file is extensively commented with instructions on how to implement the various ACME challenge methods.
+
+
+
+
+
 
 
 
