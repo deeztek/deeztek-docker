@@ -167,7 +167,7 @@ do
 esac
 done
 
-read -p "Enter the Guacamole LDAP Host Port (Note: If you selected ssl or starttls for LDAP Host Encryption above then you should enter 636. Otherwise, if you selected none for the LDAP Host Encryption above you should enter 389):"  LDAP_PORT
+read -p "Enter the Guacamole LDAP Host Port:"  LDAP_PORT
 
 if [ -z "$LDAP_PORT" ]
 then

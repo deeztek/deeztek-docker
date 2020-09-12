@@ -29,7 +29,7 @@ You must have a user with permissions to enumerate users for use with Guacamole 
 
 During installation, you will be asked to provide the LDAP Host Name or IP.
 
-During installation, you will be asked to provide the LDAP Host Port (Example: "389" for unsecure or "636" for secure).
+During installation, you will be asked to provide the LDAP Host Port (Example: "389" or "636").
 
 During installation, you will be asked to provide the LDAP Host Encryption. You must provide "none" for unsecure or "ssl" or "starttls" for secure.
 
