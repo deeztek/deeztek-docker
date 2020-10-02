@@ -3,8 +3,11 @@
 #CHECK IF MOUNT EXISTS
 if mount | grep -q "/db_backups"; then
 
+#Enter MySQL/MariaDB root credentials below
 USER="mysql_root_user"
 PASSWORD="mysql_root_password"
+
+#Enter MySQL/MariaDB dbserver name below
 DBSERVER="dbserver"
 
 databases=`mysql -u $USER -p$PASSWORD -e "SHOW DATABASES;" | tr -d "| " | grep -v Database`
