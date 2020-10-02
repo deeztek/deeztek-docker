@@ -4,6 +4,10 @@ networks:
   proxy:
     external: true
 
+  nextcloud:
+    internal: true
+
+
 services:
   nextcloud:
     image: 'nextcloud:latest'
@@ -11,87 +15,95 @@ services:
     build: .
     networks:
       - proxy
+      - nextcloud
 
     volumes:
       - nextcloud:/var/www/html
-      - smb:/mnt/smb
-     #- nextclouddata:/mnt/nextclouddata
+#Uncomment and set smb connection parameters under the volumes section below
+      #- smb:/mnt/smb
+
     environment:
-      - TZ=America/New_York
-      - MYSQL_DATABASE=nextcloud
-      - MYSQL_USER=mysql_nextcloud_user
-      - MYSQL_PASSWORD=mysql_nextcloud_password
-      - MYSQL_HOST=mysql_host
-      - REDIS_HOST=redis
-      - NEXTCLOUD_ADMIN_USER=nextcloud_admin_user
-      - NEXTCLOUD_ADMIN_PASSWORD=nextcloud_admin_password
-      - SMTP_HOST=smtp_host_name
-      - SMTP_SECURE=
-      - SMTP_PORT=25
-      - SMTP_AUTHTYPE=
-      - SMTP_NAME=
-      - SMTP_PASSWORD=
-      - MAIL_FROM_ADDRESS=from_address
-      - MAIL_DOMAIN=domain.tld
+      - TZ=$TIMEZONE
+      - MYSQL_HOST=$MYSQL_HOST
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+      - REDIS_HOST=nextcloud_redis
+      - REDIS_HOST_PASSWORD=$REDIS_PASSWORD
+      - NEXTCLOUD_ADMIN_USER=$NEXTCLOUD_ADMIN_USER
+      - NEXTCLOUD_ADMIN_PASSWORD=$NEXTCLOUD_ADMIN_PASSWORD
+      - SMTP_HOST=$SMTP_HOST
+      - SMTP_SECURE=$SMTP_SECURE
+      - SMTP_PORT=$SMTP_PORT
+      - SMTP_AUTHTYPE=$SMTP_AUTHTYPE
+      - SMTP_NAME=$SMTP_NAME
+      - SMTP_PASSWORD=$SMTP_PASSWORD
+      - MAIL_FROM_ADDRESS=$MAIL_FROM_ADDRESS
+      - MAIL_DOMAIN=$MAIL_DOMAIN
+      #- APACHE_DISABLE_REWRITE_IP=1
+#Uncomment and set to Traefik IP range
+      #- TRUSTED_PROXIES=192.168.xxx.xxx/24
 
     depends_on:
-      - redis
+      - nextcloud_redis
     restart: unless-stopped
     labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.cloud.entrypoints=http"
-        - "traefik.http.routers.cloud.rule=Host(`cloud.domain.tld`)"
-        - "traefik.http.middlewares.cloud-https-redirect.redirectscheme.scheme=https"
-        - "traefik.http.routers.cloud.middlewares=cloud-https-redirect"
-        - "traefik.http.routers.cloud-secure.entrypoints=https"
-        - "traefik.http.routers.cloud-secure.rule=Host(`cloud.domain.tld`)"
-        - "traefik.http.routers.cloud-secure.tls=true"
-          #- "traefik.http.routers.cloud-secure.tls.certresolver=le"
-        - "traefik.http.routers.cloud-secure.service=cloud"
-        - "traefik.http.services.cloud.loadbalancer.server.port=80"
-        - "traefik.docker.network=proxy"
-          #- "traefik.frontend.redirect.permanent=true" #CalDAV and CARDDAV Redirect
-          #- "traefik.frontend.redirect.regex=https://(.*)/.well-known/(card|cal)dav" #CalDAV and CARDDAV Redirect
-          #- "traefik.frontend.redirect.replacement=https://$$1/remote.php/dav/" #CalDAV and CARDDAV Redirect
-          #- "traefik.frontend.headers.STSSeconds=31536000"
-          #- "traefik.frontend.headers.STSIncludeSubdomains=true"
-          #- "traefik.frontend.headers.STSPreload=true"
-          #- "traefik.frontend.headers.browserXSSFilter=true"
-          #- "traefik.frontend.headers.contentTypeNosniff=true"
-          #- "traefik.frontend.headers.forceSTSHeader=true"
-          #- "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
-          #- "traefik.frontend.headers.frameDeny=true"
-         # Middleware cloud adds additional headers:
-        - "traefik.http.middlewares.cloud.headers.customFrameOptionsValue=SAMEORIGIN"
-        - "traefik.http.middlewares.cloud.headers.framedeny=true"
-        - "traefik.http.middlewares.cloud.headers.sslredirect=true"
-        - "traefik.http.middlewares.cloud.headers.stsIncludeSubdomains=true"
-        - "traefik.http.middlewares.cloud.headers.stsPreload=true"
-        - "traefik.http.middlewares.cloud.headers.stsSeconds=15552000"
-        # Middleware cloud-dav replaces .well-known paths for caldav and carddav with proper nextcloud path
-        - "traefik.http.middlewares.cloud-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav"
-        - "traefik.http.middlewares.cloud-dav.replacepathregex.replacement=/remote.php/dav/"
-        
-        redis:
-            image: redis:alpine
-            container_name: redis
-            networks:
-              - proxy
-        
-            restart: unless-stopped
-        
-        volumes:
-          nextcloud:
-            driver: local
-            driver_opts:
-              type: nfs
-              o: addr=192.xxx.xxx.xxx,nolock,soft,rw
-              device: :/mnt/nextcloud
-          smb:
-            driver_opts:
-              type: cifs
-              o: vers=3.02,mfsymlinks,username=smb_username,password=smb_password,domain=SMB_DOMAIN,file_mode=0777,dir_mode=0777,iocharset=utf8
-              device: "//192.168.xxx.xxx/smb_share"
-        
-          
-          
+      - "traefik.enable=true"
+      - "traefik.http.routers.cloud.entrypoints=http"
+      - "traefik.http.routers.cloud.rule=Host(`$HOST.$DOMAIN`)"
+      - "traefik.http.routers.cloud.middlewares=cloud-https-redirect"
+      - "traefik.http.routers.cloud-secure.middlewares=cloud"
+      - "traefik.http.routers.cloud-dav.middlewares=cloud-dav"
+      - "traefik.http.routers.cloud-secure.entrypoints=https"
+      - "traefik.http.routers.cloud-secure.rule=Host(`$HOST.$DOMAIN`)"
+      - "traefik.http.routers.cloud-secure.tls=true"
+      - "traefik.http.routers.cloud-secure.tls.certresolver=le"
+      - "traefik.http.routers.cloud-secure.service=cloud"
+      - "traefik.http.services.cloud.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
+
+# MIddleware definitions
+      - "traefik.http.middlewares.cloud-https-redirect.redirectscheme.scheme=https"
+
+# Middleware cloud adds additional headers:
+      - "traefik.http.middlewares.cloud.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.middlewares.cloud.headers.framedeny=true"
+      - "traefik.http.middlewares.cloud.headers.sslredirect=true"
+      - "traefik.http.middlewares.cloud.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.cloud.headers.STSPreload=true"
+      - "traefik.http.middlewares.cloud.headers.stsSeconds=315360000"
+      - "traefik.http.middlewares.cloud.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.cloud.headers.sslProxyHeaders.X-Forwarded-Proto=https"
+# Middleware cloud-dav replaces .well-known paths for caldav and carddav with proper nextcloud path
+      - "traefik.http.middlewares.cloud-dav.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav"
+      - "traefik.http.middlewares.cloud-dav.redirectregex.replacement=https://(.*)/.well-known/(card|cal)dav"
+      - "traefik.http.middlewares.cloud-dav.redirectregex.permanent=true"
+
+  nextcloud_redis:
+    image: redis:alpine
+    container_name: nextcloud_redis
+    networks:
+      - nextcloud
+    volumes:
+      - ./redis_data:/var/lib/redis
+    command: redis-server --requirepass $REDIS_PASSWORD
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  nextcloud:
+#Uncomment below to use NFS for nextcloud volume
+    #driver: local
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.168.xxx.xxx,nolock,soft,rw
+      #device: :/mnt/nextcloud
+
+#Uncomment below to use SMB volume
+  #smb:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=smbdomain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/nextcloud"
+
+
