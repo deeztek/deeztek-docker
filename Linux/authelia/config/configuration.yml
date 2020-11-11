@@ -9,8 +9,9 @@ log_level: debug
 jwt_secret: a_very_important_secret
 default_redirection_url: https://public.example.com
 totp:
-  issuer: authelia.com
+  issuer: Widgets LLC
 
+# Create "Partner Auth API" type Duo app and uncomment below and paste the generated "hostname", "integration_key" and "secret_key" below:
 #duo_api:
 #  hostname: api-123456789.example.com
 #  integration_key: ABCDEF
@@ -19,7 +20,7 @@ totp:
 
 authentication_backend:
   file:
-    path: /etc/authelia/users_database.yml
+    path: /config/users_database.yml
 
 access_control:
   default_policy: deny
@@ -53,7 +54,7 @@ regulation:
 
 storage:
   local:
-    path: /var/lib/authelia/db.sqlite3
+    path: /config/db.sqlite3
 
 notifier:
   smtp:
@@ -63,3 +64,5 @@ notifier:
     host: mail.example.com
     port: 25
     sender: admin@example.com
+
+

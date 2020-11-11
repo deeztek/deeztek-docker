@@ -9,9 +9,7 @@ services:
     image: authelia/authelia
     container_name: authelia
     volumes:
-      - ./authelia:/var/lib/authelia
-      - ./configuration.yml:/etc/authelia/configuration.yml:ro
-      - ./users_database.yml:/etc/authelia/users_database.yml
+      - ./config:/config
     networks:
       - proxy
     labels:
@@ -20,13 +18,13 @@ services:
 
       #Routers
       - "traefik.http.routers.authelia.entrypoints=https"
-      - "traefik.http.routers.authelia.rule=Host(`authelia.$DOMAIN`)"
+      - "traefik.http.routers.authelia.rule=Host(`$HOST.$DOMAIN`)"
       - "traefik.http.routers.authelia.tls=true"
       #- "traefik.http.routers.authelia.tls.certresolver=le"
 
       #Middlewares
-      #- "traefik.http.middlewares.authelia=authelia" (Only needed in Traefik 2.1. Not Needed in Traefik 2.2 and above)
-      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://authelia.$DOMAIN"
+      #- "traefik.http.middlewares.authelia=authelia" #(Only needed in Traefik 2.1. Not Needed in Traefik 2.2 and above)
+      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://$HOST.$DOMAIN"
       - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
       - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User, Remote-Groups"
 

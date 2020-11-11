@@ -103,7 +103,7 @@ then
       exit
 fi
 
-read -p "Enter the Guacamole Postgres SQL password you wish to use:"  POSTGRES_PASSWORD
+read -p "Enter the Guacamole Postgres SQL password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your password):"  POSTGRES_PASSWORD
 
 if [ -z "$POSTGRES_PASSWORD" ]
 then

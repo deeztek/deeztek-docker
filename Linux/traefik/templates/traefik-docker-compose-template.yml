@@ -8,6 +8,9 @@ services:
   traefik:
     image: traefik:v2.2
     container_name: traefik
+    logging:
+      options:
+        max-size: 10m
     command:
 
       - "--api.dashboard=true" #Enable Traefik Dashboard
