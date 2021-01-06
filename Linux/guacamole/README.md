@@ -67,6 +67,11 @@ The script will install all required components and install Guacamole on the **/
 
 After installation the script will launch the Guacamole container which in turn can be accessed by browsing to **https://HOSTNAME.DOMAIN** where **HOSTNAME** is the Guacamole hostname you specified and the **DOMAIN** is the subdomain you specified when you were prompted by the install scripts.
 
+The default credentials for the Guacamole Web GUI is:
+
+Username: guacadmin
+Password: guacadmin
+
 The **/opt/guacamole/.env** file has all the configuration variables that you set when you were prompted when running any of the scripts. 
 
 **Duo MFA Requirements**
