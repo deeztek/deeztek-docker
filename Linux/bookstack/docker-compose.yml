@@ -92,3 +92,12 @@ services:
       #type: nfs
       #o: addr=192.168.xxx.xxx,nolock,soft,rw
       #device: :/mnt/pool1/docker/bookstack
+
+#Do not enable below unless you are connecting to an existing CIFS/SMB share
+#volumes:
+  #db_backups:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=smbdomain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/shares/backups/bookstack"
+

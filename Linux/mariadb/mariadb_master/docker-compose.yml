@@ -36,6 +36,8 @@ services:
       # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
       - ./ofelia_logs:/tmp/logs
     restart: unless-stopped
+
+
 volumes:
   db_backups:
     driver: local
@@ -43,3 +45,12 @@ volumes:
       type: nfs
       o: addr=192.xxx.xxx.xxx,nolock,soft,rw
       device: :/mnt/dbbackups
+
+#Do not enable below unless you are connecting to an existing CIFS/SMB share
+#volumes:
+  #db_backups:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=smbdomain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/shares/backups/mariadb"
+

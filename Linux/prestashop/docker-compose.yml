@@ -1,0 +1,121 @@
+version: '2'
+
+networks:
+  proxy:
+    external: true
+
+services:
+  mariadb:
+    image: 'docker.io/bitnami/mariadb:10.3-debian-10'
+    container_name: prestashop_db
+    networks: 
+      - proxy
+    environment:
+      - TZ=${TZ}
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_USER=${MARIADBROOTUSER}
+      - MARIADB_ROOT_PASSWORD=${MARIADBROOTPASS}
+      - MARIADB_USER=${DBUSER}
+      - MARIADB_PASSWORD=${DBPASS}
+      - MARIADB_DATABASE=${DBDATABASE}
+    volumes:
+      - ./dbdata:/bitnami/mariadb
+      - ./db_backups:/db_backups
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: 10m
+
+  prestashop:
+    image: 'docker.io/bitnami/prestashop:1.7-debian-10'
+    container_name: prestashop
+    networks: 
+      - proxy
+    ports:
+      - '8080:8080'
+      #- '8443:8443'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.prestashop.entrypoints=http"
+      - "traefik.http.routers.prestashop.rule=Host(`${HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.prestashop.middlewares=prestashop-https-redirect"
+      - "traefik.http.routers.prestashop-secure.entrypoints=https"
+      - "traefik.http.routers.prestashop-secure.rule=Host(`${HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.prestashop-secure.tls=true"
+      #- "traefik.http.routers.prestashop-secure.tls.certresolver=le"
+      - "traefik.http.routers.prestashop-secure.service=prestashop"
+
+      # Service definition
+      - "traefik.http.services.prestashop.loadbalancer.server.port=8080"
+
+      # Middleware definitions
+      - "traefik.http.middlewares.prestashop-https-redirect.redirectscheme.scheme=https"
+
+      - "traefik.passHostHeader=true"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: 10m
+    environment:
+      - TZ=${TZ}
+      - PRESTASHOP_HOST=${HOST}.${DOMAIN}
+      - PRESTASHOP_DATABASE_HOST=mariadb
+      - PRESTASHOP_DATABASE_PORT_NUMBER=3306
+      - PRESTASHOP_DATABASE_USER=${DBUSER}
+      - PRESTASHOP_DATABASE_PASSWORD=${DBPASS}
+      - PRESTASHOP_DATABASE_NAME=${DBDATABASE}
+      - ALLOW_EMPTY_PASSWORD=no
+      - PRESTASHOP_FIRST_NAME=${PRESTASHOPFIRSTNAME}
+      - PRESTASHOP_LAST_NAME=${PRESTASHOPLASTNAME}
+      - PRESTASHOP_PASSWORD=${PRESTASHOPPASSWORD}
+      - PRESTASHOP_EMAIL=${PRESTASHOPEMAIL}
+      #- PRESTASHOP_SKIP_BOOTSTRAP=no
+      - PRESTASHOP_ENABLE_HTTPS=no
+    volumes:
+      - '/mnt/data/prestashop/prestashop_data:/bitnami/prestashop'
+    depends_on:
+      - mariadb
+
+  ofelia:
+    image: 'mcuadros/ofelia:latest'
+    container_name: prestashop_mariadb_cron
+    logging:
+      options:
+        max-size: 10m
+    environment:
+      - "TZ=$TZ"
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config/config.ini:/etc/ofelia/config.ini
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+
+
+#Do not enable below unless you are connecting to an existing NFS share
+#volumes:
+  #db_backups:
+    #driver: local
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.168.xxx.xxx,nolock,soft,rw
+      #device: :/mnt/pool1/docker/prestashop
+
+#Do not enable below unless you are connecting to an existing CIFS/SMB share
+#volumes:
+  #db_backups:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=smbdomain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/shares/backups/prestashop"
+
