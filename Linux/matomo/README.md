@@ -43,9 +43,11 @@ Stop the matomo_mariadb container:
 
 `docker container stop matomo_mariadb`
 
-Edit docker-compose.yml file and uncomment the following sections:
+Edit docker-compose.yml file and uncomment the following section:
 
 `#- db_backups:/db_backups`
+
+If you are going to be backing up to an existing NFS share uncomment the section below:
 
 ```
 #volumes:
@@ -57,7 +59,19 @@ Edit docker-compose.yml file and uncomment the following sections:
       #device: :/mnt/dbbackups
 ```
 
-Set the **192.xxx.xxx.xxx** to the IP address of your NFS server and set **/mnt/dbbackups** to the path of your NFS backups share
+and set the **192.xxx.xxx.xxx** to the IP address of your NFS server and set **/mnt/dbbackups** to the path of your NFS backups share.
+
+If you are going to be backing up to an existing CIFS/SMB share uncomment the section below:
+
+```
+#db_backups:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=SMBDOMAIN,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/shares/backups/matomo"
+```
+
+and set the **192.xxx.xxx.xxx** to the IP address of your CIFS/SMB server, set **/backups/matomo** to the CIFS/SMB share, set **smbuser** to the CIFS/SMB username, set **smbpass** to the CIFS/SMB password and set **SMBDOMAIN** to the domain/workgroup you are connecting.
 
 Edit the included dbbackups.sh file and set the following parameters:
 
