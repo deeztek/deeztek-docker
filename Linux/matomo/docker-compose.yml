@@ -110,7 +110,7 @@ services:
     restart: unless-stopped
     
 #Do not enable below unless you are connecting to an existing NFS share
-volumes:
+#volumes:
   #db_backups:
     #driver: local
     #driver_opts:
