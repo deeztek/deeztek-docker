@@ -51,10 +51,10 @@ If you are going to be backing up to an existing CIFS/SMB share uncomment the se
     #driver_opts:
       #type: cifs
       #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=SMBDOMAIN,file_mode=0777,dir_mode=0777,iocharset=utf8
-      #device: "//192.168.xxx.xxx/shares/backups/matomo"
+      #device: "//192.168.xxx.xxx/shares/backups/wordpress"
 ```
 
-and set the **192.xxx.xxx.xxx** to the IP address of your CIFS/SMB server, set **/backups/matomo** to the CIFS/SMB share, set **smbuser** to the CIFS/SMB username, set **smbpass** to the CIFS/SMB password and set **SMBDOMAIN** to the domain/workgroup you are connecting.
+and set the **192.xxx.xxx.xxx** to the IP address of your CIFS/SMB server, set **/backups/wordpress** to the CIFS/SMB share, set **smbuser** to the CIFS/SMB username, set **smbpass** to the CIFS/SMB password and set **SMBDOMAIN** to the domain/workgroup you are connecting.
 
 Edit the included dbbackups.sh file and set the following parameters:
 
