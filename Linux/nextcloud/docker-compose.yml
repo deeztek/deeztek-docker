@@ -4,8 +4,8 @@ networks:
   proxy:
     external: true
 
-  nextcloud:
-    internal: true
+  #nextcloud:
+    #internal: true
 
 
 services:
@@ -15,47 +15,48 @@ services:
     build: .
     networks:
       - proxy
-      - nextcloud
+      #- nextcloud
 
     volumes:
-      - nextcloud:/var/www/html
-#Uncomment and set smb connection parameters under the volumes section below
+      - ./nextcloud:/var/www/html
+#Uncomment and then uncomment and set smb connection parameters under the volumes section below
       #- smb:/mnt/smb
 
     environment:
       - TZ=$TIMEZONE
-      - MYSQL_HOST=$MYSQL_HOST
-      - MYSQL_DATABASE=$MYSQL_DATABASE
-      - MYSQL_USER=$MYSQL_USER
-      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+      - MYSQL_HOST=nextcloud_db:3306
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - REDIS_HOST=nextcloud_redis
-      - REDIS_HOST_PASSWORD=$REDIS_PASSWORD
-      - NEXTCLOUD_ADMIN_USER=$NEXTCLOUD_ADMIN_USER
-      - NEXTCLOUD_ADMIN_PASSWORD=$NEXTCLOUD_ADMIN_PASSWORD
-      - SMTP_HOST=$SMTP_HOST
-      - SMTP_SECURE=$SMTP_SECURE
-      - SMTP_PORT=$SMTP_PORT
-      - SMTP_AUTHTYPE=$SMTP_AUTHTYPE
-      - SMTP_NAME=$SMTP_NAME
-      - SMTP_PASSWORD=$SMTP_PASSWORD
-      - MAIL_FROM_ADDRESS=$MAIL_FROM_ADDRESS
-      - MAIL_DOMAIN=$MAIL_DOMAIN
+      - REDIS_HOST_PASSWORD=${REDIS_PASSWORD}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_AUTHTYPE=${SMTP_AUTHTYPE}
+      - SMTP_NAME=${SMTP_NAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_DOMAIN=${MAIL_DOMAIN}
       #- APACHE_DISABLE_REWRITE_IP=1
 #Uncomment and set to Traefik IP range
       #- TRUSTED_PROXIES=192.168.xxx.xxx/24
 
     depends_on:
       - nextcloud_redis
+      - nextcloud_db
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.cloud.entrypoints=http"
-      - "traefik.http.routers.cloud.rule=Host(`$HOST.$DOMAIN`)"
+      - "traefik.http.routers.cloud.rule=Host(`${HOST}.${DOMAIN}`)"
       - "traefik.http.routers.cloud.middlewares=cloud-https-redirect"
       - "traefik.http.routers.cloud-secure.middlewares=cloud"
       - "traefik.http.routers.cloud-dav.middlewares=cloud-dav"
       - "traefik.http.routers.cloud-secure.entrypoints=https"
-      - "traefik.http.routers.cloud-secure.rule=Host(`$HOST.$DOMAIN`)"
+      - "traefik.http.routers.cloud-secure.rule=Host(`${HOST}.${DOMAIN}`)"
       - "traefik.http.routers.cloud-secure.tls=true"
       - "traefik.http.routers.cloud-secure.tls.certresolver=le"
       - "traefik.http.routers.cloud-secure.service=cloud"
@@ -83,15 +84,64 @@ services:
     image: redis:alpine
     container_name: nextcloud_redis
     networks:
-      - nextcloud
+      - proxy
     volumes:
       - ./redis_data:/var/lib/redis
     command: redis-server --requirepass $REDIS_PASSWORD
     restart: unless-stopped
 
+  nextcloud_db:
+    image: linuxserver/mariadb
+    container_name: nextcloud_db
+    environment:
+      - TZ=${TIMEZONE}
+      - PUID=${PUID}
+      - PGID=${GUID}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - ./dbdata:/config
+      - ./db_backups:/db_backups
+    networks:
+      - proxy
+    restart: unless-stopped
+
+  ofelia:
+    image: 'mcuadros/ofelia:latest'
+    container_name: nextcloud_db_cron
+    environment:
+      - "TZ=$TZ"
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config/config.ini:/etc/ofelia/config.ini
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+
 volumes:
   redis_data:
   nextcloud:
+#Uncomment below to use NFS for nextcloud volume
+    #driver: local
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.168.xxx.xxx,nolock,soft,rw
+      #device: :/mnt/nextcloud
+
+#Uncomment below to use SMB volume for nextcloud storage
+  #smb:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=smbdomain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/nextcloud"
+
+  #db_backups:
 #Uncomment below to use NFS for nextcloud volume
     #driver: local
     #driver_opts:
