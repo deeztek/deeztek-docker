@@ -4,18 +4,17 @@ networks:
   proxy:
     external: true
 
-  #nextcloud:
-    #internal: true
-
 
 services:
   nextcloud:
-    image: 'nextcloud:latest'
+    image: nextcloud:latest
     container_name: nextcloud
+    logging:
+      options:
+        max-size: 10m
     build: .
     networks:
       - proxy
-      #- nextcloud
 
     volumes:
       - ./nextcloud:/var/www/html
@@ -24,14 +23,15 @@ services:
 
     environment:
       - TZ=$TIMEZONE
-      - MYSQL_HOST=nextcloud_db:3306
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_HOST=nextcloud_db
+      #- MYSQL_DATABASE=${MYSQL_DATABASE}
+      #- MYSQL_USER=${MYSQL_USER}
+      #- MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - REDIS_HOST=nextcloud_redis
       - REDIS_HOST_PASSWORD=${REDIS_PASSWORD}
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_SECURE=${SMTP_SECURE}
       - SMTP_PORT=${SMTP_PORT}
@@ -40,10 +40,11 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
       - MAIL_DOMAIN=${MAIL_DOMAIN}
-      #- APACHE_DISABLE_REWRITE_IP=1
+       #- APACHE_DISABLE_REWRITE_IP=1
 #Uncomment and set to Traefik IP range
-      #- TRUSTED_PROXIES=192.168.xxx.xxx/24
-
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES}
+    env_file:
+      - db.env
     depends_on:
       - nextcloud_redis
       - nextcloud_db
@@ -83,6 +84,9 @@ services:
   nextcloud_redis:
     image: redis:alpine
     container_name: nextcloud_redis
+    logging:
+      options:
+        max-size: 10m
     networks:
       - proxy
     volumes:
@@ -91,16 +95,17 @@ services:
     restart: unless-stopped
 
   nextcloud_db:
-    image: linuxserver/mariadb
+    image: mariadb
     container_name: nextcloud_db
+    logging:
+      options:
+        max-size: 10m
     environment:
       - TZ=${TIMEZONE}
       - PUID=${PUID}
       - PGID=${GUID}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASS}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    env_file:
+      - db.env
     volumes:
       - ./dbdata:/config
       - ./db_backups:/db_backups
@@ -111,8 +116,11 @@ services:
   ofelia:
     image: 'mcuadros/ofelia:latest'
     container_name: nextcloud_db_cron
+    logging:
+      options:
+        max-size: 10m
     environment:
-      - "TZ=$TZ"
+      - "TZ=$TIMEZONE"
     volumes:
       # the ofelia config file
       - ./ofelia_config/config.ini:/etc/ofelia/config.ini
