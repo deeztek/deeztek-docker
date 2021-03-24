@@ -10,7 +10,7 @@ Nextcloud requires that you have a fully updated Ubuntu 18.04 machine with Docke
 
 **Nextcloud Docker Network Requirements**
 
-The Nextcloud Apache image will replace the remote addr (ip address visible to Nextcloud) with the ip address from **X-Real-IP** if the request is coming from a proxy in the 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16 IP range by default. Please see: [https://github.com/nextcloud/docker#using-the-apache-image-behind-a-reverse-proxy-and-auto-configure-server-host-and-protocol](https://github.com/nextcloud/docker#using-the-apache-image-behind-a-reverse-proxy-and-auto-configure-server-host-and-protocol)
+The Nextcloud Apache image will replace the remote addr (ip address visible to Nextcloud, not to be confused with the IP visible to Apache in the container logs) with the ip address from **X-Real-IP** if the request is coming from a proxy in the 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16 IP range by default. Please see: [https://github.com/nextcloud/docker#using-the-apache-image-behind-a-reverse-proxy-and-auto-configure-server-host-and-protocol](https://github.com/nextcloud/docker#using-the-apache-image-behind-a-reverse-proxy-and-auto-configure-server-host-and-protocol)
 
 So, it's important that your Traefik network address falls within the any of the following IP ranges:
 
