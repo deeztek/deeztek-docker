@@ -47,6 +47,7 @@ If Traefik is running, you must remove it, delete the Traefik network and restar
 cd /opt/traefik
 docker-compose down
 docker network rm proxy
+docker network create proxy
 docker-compose up -d
 ```
 
