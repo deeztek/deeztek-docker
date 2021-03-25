@@ -86,17 +86,6 @@ NEXTCLOUD_ADMIN_PASSWORD=netxtcloud_admin_password
 NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.domain.tld
 TRUSTED_PROXIES=172.16.0.0/16
 REDIS_PASSWORD=redis_password
-SMTP_HOST=smtp.domain.tld
-#Set below to ssl for SSL or tls for STARTTLS or leave it empty for non-secure
-SMTP_SECURE=STARTTLS
-#Set below for 465 for ssl or 587 for STARTTLS or 25 for non-secure
-SMTP_PORT=587
-#Set below for LOGIN for authentication or PLAIN for no authentication
-SMTP_AUTHTYPE=PLAIN
-SMTP_NAME=smtp_username
-SMTP_PASSWORD=smtp_password
-MAIL_FROM_ADDRESS=someone@domain.tld
-MAIL_DOMAIN=domain.tld
 HOST=nextcloud
 DOMAIN=domain.tld
 
