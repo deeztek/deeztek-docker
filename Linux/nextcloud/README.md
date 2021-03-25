@@ -6,7 +6,7 @@ For more information please visit https://nextcloud.com
 
 **General Requirements**
 
-Nextcloud requires that you have a fully updated Ubuntu 18.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik](https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik).
+Nextcloud requires that you have a fully updated Ubuntu 18.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik](https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
 
 **Nextcloud Docker Network Requirements**
 
@@ -51,10 +51,6 @@ docker network create proxy
 docker-compose up -d
 ```
 
-**Note**
-
-The provided docker-compose.yml will install smbclient and vim in the nextcloud container using the included **Dockerfile** in order to provide SMB/CIFS support for Nextcloud.
-
 **Installation**
 
 Clone the Deeztek Docker repository with git:
@@ -66,6 +62,14 @@ This will clone the repository and create a docker directory in the directory yo
 Copy the nextcloud directory to /opt (or a directory of your choice):
 
 `cp -r deeztek-docker/Linux/nextcloud /opt/`
+
+Create necessary directories under the nextcloud directory (This assumes you copied nextcloud to the /opt directory. Substitute to your own directory as required):
+
+```
+mkdir -p /opt/nextcloud/db
+mkdir -p /opt/nextcloud/nextcloud
+mkdir -p /opt/nextcloud/redis
+```
 
 Edit the .env file:
 
@@ -114,6 +118,19 @@ MYSQL_DATABASE=nextcloud
 Bring up the nextcloud containers:
 
 `docker-compose up -d`
+
+**SMB/CIFS Support**
+
+The included **Dockerfile** will allow you to install smbclient in the Nextcloud container in order to enable SMB/CIFS support. Uncomment the section below in the docker-compose.yml file:
+
+`#build: .`
+
+Then restart the Nextcloud stack:
+
+```
+docker-compose down
+docker-compose up -d
+```
 
 **Database Backups**
 
