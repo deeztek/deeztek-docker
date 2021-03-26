@@ -10,7 +10,7 @@ networks:
 services:
   onlyoffice-documentserver-data:
     container_name: onlyoffice-documentserver-data
-    image: onlyoffice/documentserver:latest
+    image: onlyoffice/documentserver:6.1.0
     environment:
       - ONLYOFFICE_DATA_CONTAINER=true
       - DB_TYPE=postgres
@@ -42,7 +42,7 @@ services:
 
   onlyoffice-documentserver:
     container_name: onlyoffice-documentserver
-    image: onlyoffice/documentserver:latest
+    image: onlyoffice/documentserver:6.1.0
     depends_on:
       - onlyoffice-documentserver-data
       - onlyoffice-postgresql
@@ -116,7 +116,7 @@ services:
     container_name: onlyoffice-postgresql
     image: postgres:9.5
     environment:
-      - POSTGRES_DB=onlyoffice
+      - POSTGRES_DB=$DB_NAME
 #Set the POSTGRES_USER and the POSTGRES_PASSWORD below to the DB_USER and DB_PWD values of the onlyoffice-documentserver-data container above
       - POSTGRES_USER=$DB_USER
       - POSTGRES_PASSWORD=$DB_PWD
