@@ -28,7 +28,7 @@ services:
 
   ofelia:
     image: 'mcuadros/ofelia:latest'
-    container_name: nextcloud_db_cron
+    container_name: nextcloud_cron
     logging:
       options:
         max-size: 10m
@@ -44,6 +44,11 @@ services:
       # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
       - ./ofelia_logs:/tmp/logs
     restart: unless-stopped
+    depends_on:
+      - nextcloud_db
+      - nextcloud_redis
+      - nextcloud
+
 
   nextcloud_redis:
     image: redis
