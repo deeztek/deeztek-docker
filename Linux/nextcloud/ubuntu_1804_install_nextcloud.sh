@@ -241,9 +241,11 @@ if [ ! -d "/opt/$SITE_NAME-nextcloud" ]; then
 echo "Creating Nextcloud Data directories in $NEXTCLOUD_DATA_PATH/$SITE_NAME"
 echo "[`date +%m/%d/%Y-%H:%M`] Creating Nextcloud Data directories in $NEXTCLOUD_DATA_PATH/$SITE_NAME" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 #Create necessary directories and setting permissions
+/bin/mkdir -p /opt/$SITE_NAME-nextcloud/ofelia_config && \
 /bin/mkdir -p $NEXTCLOUD_DATA_PATH/$SITE_NAME && \
 /bin/mkdir -p $NEXTCLOUD_DATA_PATH/$SITE_NAME/db && \
 /bin/mkdir -p $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups && \
+/bin/mkdir -p $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/$SITE_NAME && \
 /bin/mkdir -p $NEXTCLOUD_DATA_PATH/$SITE_NAME/nextcloud && \
 /bin/mkdir -p $NEXTCLOUD_DATA_PATH/$SITE_NAME/shares && \
 /bin/mkdir -p $NEXTCLOUD_DATA_PATH/$SITE_NAME/redis 2>> $SCRIPTPATH/install_log-$TIMESTAMP.log
@@ -314,8 +316,50 @@ echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/$SITE_NAME-nextcloud/db.env file" >
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
 else
-        echo "${RED}Error Creating db.env-template/db.env file ${RESET}"
+        echo "${RED}Error Creating /opt/$SITE_NAME-nextcloud/db.env file ${RESET}"
         echo "[`date +%m/%d/%Y-%H:%M`] Error Creating /opt/$SITE_NAME-nextcloud/db.env file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+echo "Creating /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini file"
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+#create /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini
+/bin/cp -r $SCRIPTPATH/templates/ofelia-config-template.ini /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Creating /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini file ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Creating /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+echo "Creating $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file"
+echo "[`date +%m/%d/%Y-%H:%M`] Creating $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+#create /$NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh
+/bin/cp -r $SCRIPTPATH/templates/dbbackups-template.sh $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Creating $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+echo "Making $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file Executable"
+echo "[`date +%m/%d/%Y-%H:%M`] Making $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file Executable" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+#Make /$NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh Executable
+/bin/chmod +x $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Making $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file Executable ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Making $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file Executable" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
         exit
 fi
 
@@ -457,7 +501,54 @@ fi
 
 #=== CONFIGURE /opt/$SITE_NAME-nextcloud/db.env ENDS HERE ===
 
-#=== CONFIGURE /opt/$SITE_NAME-nextcloud/docker-compose.yml ENDS HERE ===
+#=== CONFIGURE /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini STARTS HERE ===
+
+echo "Configuring /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini file with Nextcloud Site Name"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini file with Nextcloud Site Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+/bin/sed -i -e "s,SITENAME,${SITE_NAME},g" "/opt/$SITE_NAME-nextcloud/ofelia_config/config.ini"
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Configuring /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini file with Nextcloud Site Name ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini file with Nextcloud Site Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+#=== CONFIGURE /opt/$SITE_NAME-nextcloud/ofelia_config/config.ini ENDS HERE ===
+
+#=== CONFIGURE $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh STARTS HERE ===
+
+echo "Configuring $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file with Nextcloud Site Name"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file with Nextcloud Site Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+/bin/sed -i -e "s,SITENAME,${SITE_NAME},g" "$NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh"
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Configuring $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file with Nextcloud Site Name ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file with Nextcloud Site Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+echo "Configuring $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file with MySQL/MariaDB Root Password"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file with MySQL/MariaDB Root Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+/bin/sed -i -e "s,MYSQLROOTPASSWORD,${MYSQL_ROOT_PASSWORD},g" "$NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh"
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Configuring $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file with MySQL/MariaDB Root Password ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh file with MySQL/MariaDB Root Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+#=== CONFIGURE $NEXTCLOUD_DATA_PATH/$SITE_NAME/db_backups/dbbackups.sh ENDS HERE ===
+
+#=== CONFIGURE /opt/$SITE_NAME-nextcloud/docker-compose.yml STARTS HERE ===
 
 
 echo "Configuring /opt/$SITE_NAME-nextcloud/docker-compose.yml file with network name of Traefik container"
