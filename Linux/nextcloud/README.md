@@ -61,7 +61,7 @@ This will clone the repository and create a docker directory in the directory yo
 
 Change to the nextcloud directory:
 
-`cd docker/Linux/nextcloud`
+`cd deeztek-docker/Linux/nextcloud`
 
 Run the following script as root:
 
