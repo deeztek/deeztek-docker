@@ -14,13 +14,13 @@ Zabbix requires that you have a fully updated Ubuntu 18.04 machine with Docker a
 
 Clone the Deeztek Docker repository with git:
 
-`sudo git clone https://gitlab.deeztek.com/dedwards/docker.git`
+`sudo git clone https://github.com/deeztek/deeztek-docker.git`
 
 This will clone the repository and create a docker directory in the directory you ran the git clone command from.
 
 Change to the zabbix directory:
 
-`cd docker/Linux/zabbix`
+`cd deeztek-docker/Linux/zabbix`
 
 Run the following script as root:
 
