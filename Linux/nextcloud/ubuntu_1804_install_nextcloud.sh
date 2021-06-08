@@ -275,6 +275,19 @@ else
         exit
 fi
 
+echo "Creating Dockerfile file to build SMB/CIFS Support"
+echo "[`date +%m/%d/%Y-%H:%M`] Creating Dockerfile file to build SMB/CIFS Support" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+/bin/cp $SCRIPTPATH/Dockerfile /opt/$SITE_NAME-nextcloud/Dockerfile
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Creating Dockerfile file to build SMB/CIFS Support ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Creating Dockerfile file to build SMB/CIFS Support" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
 else
 
 echo "Creating docker-compose.yml file without SMB/CIFS Support"
