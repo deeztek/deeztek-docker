@@ -59,85 +59,23 @@ Clone the Deeztek Docker repository with git:
 
 This will clone the repository and create a docker directory in the directory you ran the git clone command from.
 
-Copy the nextcloud directory to /opt (or a directory of your choice):
+Change to the nextcloud directory:
 
-`cp -r deeztek-docker/Linux/nextcloud /opt/`
+`cd docker/Linux/nextcloud`
 
-Create necessary directories under the nextcloud directory (This assumes you copied nextcloud to the /opt directory. Substitute to your own directory as required):
+Run the following script as root:
 
-```
-mkdir -p /opt/nextcloud/db
-mkdir -p /opt/nextcloud/nextcloud
-mkdir -p /opt/nextcloud/redis
-```
+`bash ubuntu_1804_install_nextcloud.sh`
 
-Edit the .env file:
-
-`vi /opt/nextcloud/.env`
-
-Change the following variables to suit your needs:
-
-```
-TIMEZONE=America/New_York
-PUID=1001
-GUID=1001
-NEXTCLOUD_ADMIN_USER=nextcloud_admin_user	
-NEXTCLOUD_ADMIN_PASSWORD=netxtcloud_admin_password
-NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.domain.tld
-TRUSTED_PROXIES=172.16.0.0/16
-REDIS_PASSWORD=redis_password
-HOST=nextcloud
-DOMAIN=domain.tld
-
-```
-
-Edit the db.env file:
-
-`vi /opt/nextcloud/db.env`
-
-Change the following variables to suit your needs:
-
-```
-MYSQL_ROOT_PASSWORD=mysql_root_password
-MYSQL_USER=nextcloud
-MYSQL_PASSWORD=mysql_password
-MYSQL_DATABASE=nextcloud
-```
-
-Bring up the nextcloud containers:
-
-`docker-compose up -d`
-
-**SMB/CIFS Support**
-
-The included **Dockerfile** will allow you to install smbclient in the Nextcloud container in order to enable SMB/CIFS support. Uncomment the section below in the docker-compose.yml file:
-
-`#build: .`
-
-Then restart the Nextcloud stack:
-
-```
-docker-compose down
-docker-compose up -d
-```
+The script will create a **/opt/SITENAME-nextcloud** directory where **SITENAME** is the Site Name you specify during installation, configure all necessary directories and files under that directory and launch the nextcloud stack.
 
 **Database Backups**
 
-Edit /opt/nextcloud/db_backups/dbbackups.sh file:
+The installation script will automatically configure database backups and place a **dbbackups.sh** script along with any database backups in the **db_backups** directory under the Nextcloud Data path you specified during installation.
 
-`vi /opt/nextcloud/db_backups/dbbackups.sh`
+If you wish to have e-mail notifications of backup successes/failures, edit **/opt/SITENAME-nextcloud/ofelia_config/config.ini**:
 
-Set the PASSWORD="mysql_root_password" to match the MYSQLROOTPASS from the db.env file from above.
-
-Save the file
-
-Make it executable:
-
-`chmod +x /mnt/backups/dbbackups.sh`
-
-If you wish to have e-mail notifications of backup successes/failures, edit /opt/nextcloud/ofelia_config/config.ini:
-
-`vi /opt/nextcloud/ofelia_config/config.ini`
+`vi /opt/SITENAME-nextcloud/ofelia_config/config.ini`
 
 Set the parameters below under the [global] section to reflect your e-mail server:
 
@@ -152,23 +90,19 @@ email-from = someone@domain.tld
 mail-only-on-error = false
 ```
 
-By default the job is scheduled to run at 1:30 AM as indicated by the entry below in /opt/nextcloud/ofelia_config/config.ini. Adjust as required:
+By default the job is scheduled to run at 1:30 AM as indicated by the entry below in **/opt/SITENAME-nextcloud/ofelia_config/config.ini**. Adjust as required:
 
 ```
 [job-exec "run-nextcloud-backups"]
 schedule = 0 30 1 * * *
-container = nextcloud_db
+container = SITENAME_nextcloud_db
 command = /db_backups/dbbackups.sh
 ```
 
 Restart the nextcloud_db_cron container:
 
-`docker container restart nextcloud_db_cron`
+`docker container restart SITENAME_nextcloud_db_cron`
 
 Restart the nextcloud_db container:
 
-`docker container restart nextcloud_db`
-
-
-
-
+`docker container restart SITENAME_nextcloud_db`
