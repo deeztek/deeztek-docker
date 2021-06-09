@@ -604,11 +604,24 @@ else
         exit
 fi
 
-#=== CONFIGURE /opt/$SITE_NAME-nextcloud/docker-compose.yml ENDS HERE ===
+#=== CONFIGURE /opt/$SITE_NAME-nextcloud/docker-compose.yml ENDS HERE ===           
 
+if [ "${SMB_SUPPORT}" == "Yes" ]; then       
 
-            echo "Starting Nextcloud Docker Container"
-            echo "[`date +%m/%d/%Y-%H:%M`] Starting Nextcloud Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "Building SMB/CIFS Support and Starting Nextcloud Docker Container"
+echo "[`date +%m/%d/%Y-%H:%M`] Building SMB/CIFS Support and Starting Nextcloud Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+            cd /opt/$SITE_NAME-nextcloud && /usr/local/bin/docker-compose up --build -d
+
+            if [ $? -eq 0 ]; then
+            echo "${GREEN}Done ${RESET}"
+            else
+            echo "${RED}Error Building SMB/CIFS Support and Starting Nextcloud Docker Container ${RESET}"
+            echo "[`date +%m/%d/%Y-%H:%M`] Error Building SMB/CIFS Support and Starting Nextcloud Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+            exit
+            fi
+
+else 
 
             cd /opt/$SITE_NAME-nextcloud && /usr/local/bin/docker-compose up -d
 
@@ -619,6 +632,7 @@ fi
             echo "[`date +%m/%d/%Y-%H:%M`] Error Starting Nextcloud Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
             exit
             fi
+fi
 
             echo "FINISHED INSTALLATION. ENSURE NEXTCLOUD DOCKER CONTAINER IS UP AND RUNNING" | boxes -d stone -p a2v1
             echo "[`date +%m/%d/%Y-%H:%M`] FINISHED INSTALLATION. ENSURE NEXTCLOUD DOCKER CONTAINER IS UP AND RUNNING" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
