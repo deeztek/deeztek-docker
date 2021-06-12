@@ -205,7 +205,7 @@ and running ${RESET}"
 /usr/bin/docker container ls --format 'table {{.Names}}\t{{.Networks}}'  | boxes -d stone -p a2v1
 
 
-read -p "Enter the network name of your Traefik container from the listing above (Example: proxy)"  TRAEFIK_NETWORK
+read -p "Enter the network name of your Traefik container from the listing above (Example: proxy):"  TRAEFIK_NETWORK
 
 if [ -z "$TRAEFIK_NETWORK" ]
 then
@@ -213,6 +213,26 @@ then
       echo "${RED}the network name of your Traefik container cannot be empty ${RESET}"
       exit
 fi
+
+#Export the variable
+export TRAEFIK_NETWORK
+
+#Output Traefik Network Subnet
+echo "${GREEN}Below is the IPv4 Subnet of the Traefik container network name you specified above. This subnet will be used to set the Trusted Proxies in Nextcloud. ${RESET}"
+
+/usr/bin/docker network inspect $TRAEFIK_NETWORK | grep -i Subnet | awk -F ":"  '{print $NF}' | tr -d \" | tr -d \, | tr -d \ | boxes -d stone -p a2v1
+
+read -p "Enter the Subnet of your Traefik container network as it appears above (Ex: 172.16.1.0/24):"  TRAEFIK_SUBNET
+
+if [ -z "$TRAEFIK_SUBNET" ]
+then
+   
+      echo "${RED}the subnet of Traefik container network cannot be empty ${RESET}"
+      exit
+fi
+
+#Export the variable
+export TRAEFIK_SUBNET
 
 read -p "Enter the full path to an EXISTING directory where your Nextcloud Data will reside without an ending slash / (Example: /mnt/data):"  NEXTCLOUD_DATA_PATH
 
@@ -454,6 +474,20 @@ else
         echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/$SITE_NAME-nextcloud/.env file with Nextcloud Subdomain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
         exit
 fi
+
+echo "Configuring /opt/$SITE_NAME-nextcloud/.env file with Nextcloud Trusted Proxies"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-nextcloud/.env file with Nextcloud Trusted Proxies" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+/bin/sed -i -e "s,TRUSTEDPROXIES,${TRAEFIK_SUBNET},g" "/opt/$SITE_NAME-nextcloud/.env"
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Configuring /opt/$SITE_NAME-nextcloud/.env file with Nextcloud Trusted Proxies ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/$SITE_NAME-nextcloud/.env file with Nextcloud Trusted Proxies" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
 
 #=== CONFIGURE /opt/$SITE_NAME-nextcloud/.env ENDS HERE ===
 
