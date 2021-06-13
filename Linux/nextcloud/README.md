@@ -6,7 +6,7 @@ For more information please visit https://nextcloud.com
 
 ## General Requirements ##
 
-Nextcloud requires that you have a fully updated Ubuntu 18.04 (also tested successfully on Ubuntu 20.04) machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik]https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
+Nextcloud requires that you have a fully updated Ubuntu 18.04 (also tested successfully on Ubuntu 20.04) machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik](https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
 
 ## Nextcloud Docker Network Requirements ##
 
