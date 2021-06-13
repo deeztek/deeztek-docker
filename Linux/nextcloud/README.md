@@ -1,14 +1,14 @@
-## About ##
+## About
 
 Nextcloud is the first completely integrated on-premises content collaboration platform on the market, ready for a new generation of users who expect seamless online collaboration capabilities out of the box.
 
 For more information please visit https://nextcloud.com
 
-## General Requirements ##
+## General Requirements
 
 Nextcloud requires that you have a fully updated Ubuntu 18.04 (also tested successfully on Ubuntu 20.04) machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik](https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
 
-## Nextcloud Docker Network Requirements ##
+## Nextcloud Docker Network Requirements
 
 The Nextcloud Apache image will replace the remote addr (ip address visible to Nextcloud, not to be confused with the IP visible to Apache in the container logs) with the ip address from **X-Real-IP** if the request is coming from a proxy in the 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16 IP range by default. Please see: [https://github.com/nextcloud/docker#using-the-apache-image-behind-a-reverse-proxy-and-auto-configure-server-host-and-protocol](https://github.com/nextcloud/docker#using-the-apache-image-behind-a-reverse-proxy-and-auto-configure-server-host-and-protocol)
 
@@ -50,7 +50,7 @@ docker network rm proxy
 docker network create proxy
 docker-compose up -d
 ```
-## Prerequisites ##
+## Prerequisites
 
 The installation script will prompt you for the following information. Ensure you have the following information available **BEFORE** running the script:
 
@@ -68,7 +68,7 @@ The installation script will prompt you for the following information. Ensure yo
 - **IPv4 Subnet of your Traefik container network** This is the subnet of your Traefik container network. This will be used to configure the Trusted Proxies in Nextcloud. The script will attempt to list the IPv4 Subnet of you Traefik container network for you.
 - **Nextcloud Data Path** This is the path the script will use to store all persistent Nextcloud data. The script will create all necessary directories under that path. Ensure the path already exists (Example: /mnt/data).
 
-## Installation ##
+## Installation
 
 Clone the Docker repository with git:
 
@@ -86,7 +86,7 @@ Run the following script as root:
 
 The script will create a **/opt/SITENAME-nextcloud** directory where **SITENAME** is the Site Name you specify during installation, configure all necessary directories and files under that directory and launch the nextcloud stack.
 
-## Let's Encrypt Certificates ##
+## Let's Encrypt Certificates
 
 By default, the script will leverage Traefik to generate a self-signed certificate for your Nextcloud container. By default, Let's Encrypt integration is not enabled. If you wish to enable Let's Encrypt automatic certificates, ensure your Nextcloud instance DNS is pointing to your Traefik container and edit **/opt/SITENAME-nextcloud/docker-compose.yml**:
 
@@ -98,7 +98,7 @@ Uncomment the following Traefik label:
 
 Restart the Nextcoud container.
 
-## Database Backups ##
+## Database Backups
 
 The installation script will automatically configure database backups and place a **dbbackups.sh** script along with any database backups in the **db_backups** directory under the Nextcloud Data path you specified during installation.
 
