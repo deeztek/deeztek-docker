@@ -15,8 +15,11 @@ services:
       - TZ=$TZ
       - UMASK_SET=022 #optional
     volumes:
-      - ./softether_config:/usr/vpnserver
-      - ./certs:/certs
+      - ./softether_config/vpnserver/vpn_server.config:/usr/vpnserver/vpn_server.config
+      - ./certs/$HOST.$DOMAIN/fullchain.crt:/opt/server.crt
+      - ./certs/$HOST.$DOMAIN/privkey.key:/opt/server.key
+
+      
     networks:
       - proxy
     cap_add:
@@ -31,17 +34,29 @@ services:
       - 4500:4500/udp
     labels:
       - "traefik.enable=true"
-      - "traefik.tcp.services.sofethervpn.loadBalancer.server.port=443"
+      #TCP Config
+      - "traefik.tcp.services.softethervpn.loadBalancer.server.port=443"
       - "traefik.tcp.routers.softethervpn.entrypoints=https"
-      - "traefik.tcp.routers.softethervpn.rule=HostSNI(`softether.$DOMAIN`)"
-      - "traefik.http.routers.softethervpn.entrypoints=https"
-      - "traefik.http.routers.softethervpn.rule=Host(`softether.$DOMAIN`)"
-      - "traefik.http.routers.softethervpn.tls=true"
-      #- "traefik.http.routers.softethervpn.tls.certresolver=le"
+      - "traefik.tcp.routers.softethervpn.rule=HostSNI(`$HOST.$DOMAIN`)"
       - "traefik.tcp.routers.softethervpn.tls.passthrough=true"
-
+  
+      #HTTP Config
+      - "traefik.http.routers.softether.entrypoints=http"
+      - "traefik.http.routers.softether.rule=Host(`$HOST.$DOMAIN`)"
+      - "traefik.http.routers.softether.middlewares=softether-https-redirect"
+      - "traefik.http.routers.softether-secure.entrypoints=https"
+      - "traefik.http.routers.softether-secure.rule=Host(`$HOST.$DOMAIN`)"
+      - "traefik.http.routers.softether-secure.tls=true"
+      #- "traefik.http.routers.softether-secure.tls.certresolver=le"
+      - "traefik.http.routers.softether-secure.service=softether"
+  
+      #Service definition
+      - "traefik.http.services.softether.loadbalancer.server.port=443"
+  
+      #Middleware definitions
+      - "traefik.http.middlewares.softether-https-redirect.redirectscheme.scheme=https"
+  
     restart: unless-stopped
-
 
    certs:
       container_name: traefik-cert-dumper

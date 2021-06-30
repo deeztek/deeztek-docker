@@ -119,7 +119,7 @@ then
       exit
 fi
 
-read -p "Enter the Nextcloud MySQL/MariaDB Nextcloud Database Username you wish to use with no spaces or special characters (Example: nextcloud):"  MYSQL_USERNAME
+read -p "Enter the MySQL/MariaDB Nextcloud Database Username you wish to use with no spaces or special characters (Example: nextcloud):"  MYSQL_USERNAME
 
 if [ -z "$MYSQL_USERNAME" ]
 then
@@ -128,7 +128,7 @@ then
       exit
 fi
 
-read -p "Enter the Nextcloud MySQL/MariaDB Nextcloud Database Password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your Username):"  MYSQL_PASSWORD
+read -p "Enter the MySQL/MariaDB Nextcloud Database Password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your Username):"  MYSQL_PASSWORD
 
 if [ -z "$MYSQL_PASSWORD" ]
 then
@@ -137,7 +137,7 @@ then
       exit
 fi
 
-read -p "Enter the Nextcloud MySQL/MariaDB Nextcloud Database Name you wish to use with no spaces or special characters (Example: nextcloud_db):"  MYSQL_DATABASE
+read -p "Enter the MySQL/MariaDB Nextcloud Database Name you wish to use with no spaces or special characters (Example: nextcloud_db):"  MYSQL_DATABASE
 
 if [ -z "$MYSQL_DATABASE" ]
 then
