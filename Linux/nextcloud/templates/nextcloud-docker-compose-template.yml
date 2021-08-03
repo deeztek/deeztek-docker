@@ -134,6 +134,7 @@ services:
 # Middleware cloud-dav replaces .well-known paths for caldav and carddav with proper nextcloud path
       - "traefik.http.middlewares.cloud-dav-SITENAME.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav"
       - "traefik.http.middlewares.cloud-dav-SITENAME.redirectregex.replacement=https://(.*)/.well-known/(card|cal)dav"
+      - "traefik.http.middlewares.cloud-webdav-SITENAME.replacepathregex.replacement=/remote.php/dav/"
       - "traefik.http.middlewares.cloud-dav-SITENAME.redirectregex.permanent=true"
 
 volumes:

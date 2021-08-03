@@ -17,6 +17,14 @@ services:
       - DB_PASS=${DBPASS}
       - DB_DATABASE=${DBDATABASE}
       - APP_URL=https://${HOST}.${DOMAIN}
+      - MAIL_DRIVER=smtp
+      - MAIL_HOST=mail.${DOMAIN}
+      - MAIL_PORT=25
+      - MAIL_FROM=bookstack@${DOMAIN}
+      - MAIL_FROM_NAME=BookStack
+      - MAIL_USERNAME=
+      - MAIL_PASSWORD=
+      - MAIL_ENCRYPTION=
     volumes:
       - ./config:/config
     networks:
