@@ -6,19 +6,19 @@ For more information please visit https://www.bookstackapp.com
 
 **General Requirements**
 
-Bookstack requires that you have a fully updated Ubuntu 18.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik](https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik).
+Bookstack requires that you have a fully updated Ubuntu 18.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik](https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
 
 **Installation**
 
 Clone the Deeztek Docker repository with git:
 
-`sudo git clone https://gitlab.deeztek.com/dedwards/docker.git`
+`sudo git clone https://github.com/deeztek/deeztek-docker`
 
 This will clone the repository and create a docker directory in the directory you ran the git clone command from.
 
 Copy the bookstack directory to /opt (or a directory of your choice):
 
-`cp -r docker/Linux/bookstack /opt/`
+`cp -r deeztek-docker/Linux/bookstack /opt/`
 
 Edit the .env file:
 
