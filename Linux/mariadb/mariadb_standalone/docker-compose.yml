@@ -1,0 +1,65 @@
+version: "3.3"
+
+services:
+
+  mariadb:
+    image: linuxserver/mariadb
+    container_name: dbserver
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - MYSQL_ROOT_PASSWORD=$MYSQLROOTPASSWORD
+      - TZ=$TZ
+      #- MYSQL_DATABASE=USER_DB_NAME #optional
+      #- MYSQL_USER=MYSQL_USER #optional
+      #- MYSQL_PASSWORD=DATABASE_PASSWORD #optional
+      #- REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
+    volumes:
+      - /mnt/data/dbserver:/config
+      - db_backups:/db_backups
+    ports:
+      - 3306:3306
+    restart: unless-stopped
+
+  ofelia:
+    image: mcuadros/ofelia:latest
+    container_name: dbserver_cron
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+
+    environment:
+      - TZ=$TZ
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config:/etc/ofelia
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+
+
+#volumes:
+  #db_backups:
+    #driver: local
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.168.xxx.xxx,nolock,soft,rw
+      #device: :/mnt/pool1/Backups/dbase
+
+#Do not enable below unless you are connecting to an existing CIFS/SMB share
+#volumes:
+  #db_backups:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=smbdomain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/shares/backups/mariadb"
