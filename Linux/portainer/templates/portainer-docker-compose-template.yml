@@ -2,7 +2,7 @@ version: '2'
 
 services:
   portainer:
-    image: 'portainer/portainer'
+    image: 'portainer/portainer-ce:latest'
     container_name: portainer
     restart: always
     volumes:
@@ -25,7 +25,7 @@ services:
     restart: always
 
   portainer_agent:
-    image: portainer/agent
+    image: portainer/agent:latest
     container_name: agent
     ports:
       - 9001:9001
