@@ -19,7 +19,7 @@ apt install -y boxes
 
 #Get Inputs
 read -p "Enter the username of the user you would like to run Docker commands without having to prefix with sudo:"  THEUSER
-read -p "Browse to https://github.com/docker/compose/releases/latest to get the latest Docker version and then enter that Docker version in order to install (Example 1.25.1):"  DOCKERCOMPOSEVERSION
+read -p "Browse to https://github.com/docker/compose/releases/latest to get the latest Docker version and then enter that Docker version in order to install. Ensure you include the 'v' in the version number (Example v2.1.0):"  DOCKERCOMPOSEVERSION
 
 #Ensure Script is run as root and if not exit
 if [ `id -u` -ne 0 ]; then
@@ -115,8 +115,12 @@ fi
 
 echo "[`date +%m/%d/%Y-%H:%M`] Downloading Docker Compose version $DOCKERCOMPOSEVERSION"
 
+#Generate docker-compose download filename since they changed it from docker-compose-Linux-amd64 to docker-compose-linux-amd64
+FILENAME=docker-compose-`uname -s`-`uname -m`
+FILENAMESMALL=${FILENAME,,}
+
 #Download Docker Compose Version Specified above
-/usr/bin/curl -L https://github.com/docker/compose/releases/download/$DOCKERCOMPOSEVERSION/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+/usr/bin/curl -L https://github.com/docker/compose/releases/download/$DOCKERCOMPOSEVERSION/$FILENAMESMALL -o /usr/local/bin/docker-compose
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -138,7 +142,21 @@ THEERROR=$(($THEERROR+$ERR))
 echo "[`date +%m/%d/%Y-%H:%M`] ERROR: $ERR, making Docker Compose Executable"
 exit 1
 else
-echo "[`date +%m/%d/%Y-%H:%M`] SUCCESS. Completed making Docker Compose Executble"
+echo "[`date +%m/%d/%Y-%H:%M`] SUCCESS. Completed making Docker Compose Executable"
+fi
+
+echo "[`date +%m/%d/%Y-%H:%M`] Downloading and Installing Docker Compose Switch"
+
+#Download and install Docker Compose Switch
+curl -fL https://raw.githubusercontent.com/docker/compose-cli/main/scripts/install/install_linux.sh | sh
+
+ERR=$?
+if [ $ERR != 0 ]; then
+THEERROR=$(($THEERROR+$ERR))
+echo "[`date +%m/%d/%Y-%H:%M`] ERROR: $ERR, downloading and installing Docker Compose Switch"
+exit 1
+else
+echo "[`date +%m/%d/%Y-%H:%M`] SUCCESS. Completed downloading and installing Docker Compose Switch"
 fi
 
 echo "[`date +%m/%d/%Y-%H:%M`] Printing out Docker Compose Version"
@@ -155,6 +173,7 @@ else
 echo "[`date +%m/%d/%Y-%H:%M`] SUCCESS. Completed printing out Docker Compose Version"
 echo "The version output above should be docker-compose version $DOCKERCOMPOSEVERSION. If not, installation has failed"
 fi
+
 
 
 
