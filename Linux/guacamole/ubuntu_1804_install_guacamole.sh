@@ -170,18 +170,34 @@ else
         exit
 fi
 
-echo "Creating /opt/guacamole/dbinit"
-echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/guacamole/dbinit" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "Creating /opt/guacamole/dbinit/initdb.sql"
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/guacamole/dbinit/initdb.sql" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-/bin/cp -r $SCRIPTPATH/dbinit/ /opt/guacamole/
+/bin/mkdir -p /opt/guacamole/dbinit
+/usr/bin/docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --postgres > /opt/guacamole/dbinit/initdb.sql
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
 else
-        echo "${RED}Error creating /opt/guacamole/dbinit ${RESET}"
-        echo "[`date +%m/%d/%Y-%H:%M`] Error creating /opt/guacamole/dbinit" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        echo "${RED}Error creating /opt/guacamole/dbinit/initdb.sql ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error creating /opt/guacamole/dbinit/initdb.sql" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
         exit
 fi
+
+
+#echo "Creating /opt/guacamole/dbinit"
+#echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/guacamole/dbinit" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+#/bin/cp -r $SCRIPTPATH/dbinit/ /opt/guacamole/
+
+#if [ $? -eq 0 ]; then
+    #echo "${GREEN}Done ${RESET}"
+#else
+        #echo "${RED}Error creating /opt/guacamole/dbinit ${RESET}"
+        #echo "[`date +%m/%d/%Y-%H:%M`] Error creating /opt/guacamole/dbinit" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        #exit
+#fi
+
 
 echo "Creating /opt/guacamole/guacamole_home"
 echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/guacamole/guacamole_home" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
@@ -308,7 +324,7 @@ do
             echo "Starting Guacamole Docker Container"
             echo "[`date +%m/%d/%Y-%H:%M`] Starting Guacamole Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-            cd /opt/guacamole && /usr/local/bin/docker-compose up -d
+            cd /opt/guacamole && /usr/local/bin/docker-compose up && /usr/local/bin/docker-compose down && /bin/cp $SCRIPTPATH/dbfix/pg_hba.conf /opt/guacamole/dbdata && /usr/local/bin/docker-compose up -d
 
             if [ $? -eq 0 ]; then
             echo "${GREEN}Done ${RESET}"
