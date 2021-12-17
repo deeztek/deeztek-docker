@@ -35,7 +35,7 @@ Change to the traefik directory:
 
 Run the following script as root:
 
-`bash ubuntu_1804_install_traefik.sh`
+`sudo bash ubuntu_1804_install_traefik.sh`
 
 The script will install all required components and install Traefik on the **/opt/traefik** directory of your Docker host
 

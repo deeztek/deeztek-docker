@@ -24,7 +24,7 @@ Change to the zabbix directory:
 
 Run the following script as root:
 
-`bash ubuntu_1804_install_zabbix.sh`
+`sudo bash ubuntu_1804_install_zabbix.sh`
 
 **Backups**
 

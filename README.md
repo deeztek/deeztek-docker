@@ -20,7 +20,7 @@ Change to the portainer directory:
 
 Run the following script as root:
 
-`bash start.sh`
+`sudo bash start.sh`
 
 
 

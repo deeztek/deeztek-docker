@@ -39,7 +39,7 @@ and editing or adding the following (Example below utilizes the **172.16.0.0/12*
 
 Save the file and restart your your docker service:
 
-`systemctl restart docker`
+`sudo systemctl restart docker`
 
 If Traefik is running, you must remove it, delete the Traefik network and restart Traefik (If you used the Deeztek Traefik installation script, then the default Traefik network is usually named **proxy**. Obviously, adjust to your specific environment):
 
@@ -82,7 +82,7 @@ Change to the nextcloud directory:
 
 Run the following script as root:
 
-`bash ubuntu_1804_install_nextcloud.sh`
+`sudo bash ubuntu_1804_install_nextcloud.sh`
 
 The script will create a **/opt/SITENAME-nextcloud** directory where **SITENAME** is the Site Name you specify during installation, configure all necessary directories and files under that directory and launch the nextcloud stack.
 

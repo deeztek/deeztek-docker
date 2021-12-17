@@ -29,7 +29,7 @@ Change to the portainer directory:
 
 Run the following script as root:
 
-`bash ubuntu_1804_install_portainer.sh`
+`sudo bash ubuntu_1804_install_portainer.sh`
 
 The script will install all required components and install Portainer on the **/opt/portainer** directory of your Docker host
 

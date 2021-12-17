@@ -57,11 +57,11 @@ Change to the guacamole directory:
 
 For local user authentication run the following script as root:
 
-`bash ubuntu_1804_install_guacamole.sh`
+`sudo bash ubuntu_1804_install_guacamole.sh`
 
 For LDAP user authentication run the following script as root:
 
-`bash ubuntu_1804_install_guacamole_ldap.sh`
+`sudo bash ubuntu_1804_install_guacamole_ldap.sh`
 
 The script will install all required components and install Guacamole on the **/opt/guacamole** directory of your Docker host
 
