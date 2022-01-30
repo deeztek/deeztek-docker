@@ -153,6 +153,13 @@ if [ ! -d "/opt/$SITE_NAME-Collabora" ]; then
       exit 1
    fi
 
+source "$(pwd)/spinner.sh"
+
+# test success
+start_spinner 'sleeping for 2 secs...'
+sleep 2
+stop_spinner $?
+
 start_spinner 'Creating docker-compose.yml...'
 sleep 1
 
