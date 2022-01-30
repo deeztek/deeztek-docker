@@ -1,0 +1,48 @@
+version: '3'
+
+networks:
+
+  TRAEFIKNETWORK:
+    external: true
+
+services:
+  SITENAME_code:
+    image: collabora/code:latest
+    container_name: SITENAME_collabora
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+    restart: always
+    environment:
+      - password=${COLLABORA_PASSWORD}
+      - username=${COLLABORA_USERNAME}
+      - domain=${COLLABORA_DOMAIN}
+      - extra_params=--o:ssl.enable=true
+    ports:
+      - 9980:9980
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.collabora-SITENAME.entrypoints=http"
+      - "traefik.http.routers.collabora-SITENAME.rule=Host(`${HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.collabora-SITENAME.middlewares=collabora-https-redirect"
+      - "traefik.http.routers.collabora-secure-SITENAME.entrypoints=https"
+      - "traefik.http.routers.collabora-secure-SITENAME.rule=Host(`${HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.collabora-secure-SITENAME.tls=true"
+      - "traefik.http.routers.collabora-secure-SITENAME.tls.certresolver=le"
+      - "traefik.http.routers.collabora-secure-SITENAME.service=collabora"
+
+      # Service definition
+      - "traefik.http.services.collabora-SITENAME.loadbalancer.server.port=9980"
+
+      # Middleware definitions
+      - "traefik.http.middlewares.collabora-https-redirect-SITENAME.redirectscheme.scheme=https"
+      - "traefik.http.services.collabora-SITENAME.loadbalancer.server.scheme=https"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
