@@ -117,7 +117,7 @@ services:
 #      - "traefik.http.routers.cloud-secure-SITENAME.tls.certresolver=le"
       - "traefik.http.routers.cloud-secure-SITENAME.service=cloud-SITENAME"
       - "traefik.http.services.cloud-SITENAME.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy"
+      - "traefik.docker.network=TRAEFIKNETWORK"
 
 # MIddleware definitions
       - "traefik.http.middlewares.cloud-https-redirect-SITENAME.redirectscheme.scheme=https"

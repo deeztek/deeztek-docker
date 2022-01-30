@@ -68,7 +68,7 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
+      - "traefik.docker.network=TRAEFIKNETWORK"
 
       # Routers
       - "traefik.http.routers.onlyoffice-SITENAME.entrypoints=http"
