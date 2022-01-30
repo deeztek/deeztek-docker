@@ -201,7 +201,7 @@ stop_spinner $?
 start_spinner 'Creating Random Collabora Username...'
 sleep 1
 
-COLLABORA_USERNAME=`/bin/cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${1:-10} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+COLLABORA_USERNAME=`/bin/cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${1:-10} | head -n 1`
 
 stop_spinner $?
 
@@ -213,7 +213,7 @@ echo "Random Collabora Username is: $COLLABORA_USERNAME" | boxes -d stone -p a2v
 start_spinner 'Creating Random Collabora Password...'
 sleep 1
 
-COLLABORA_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-20} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+COLLABORA_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-20} | head -n 1`
 
 stop_spinner $?
 
@@ -269,13 +269,18 @@ sleep 1
 
 echo "[`date +%m/%d/%Y-%H:%M`] Starting Collabora Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
+start_spinner 'Starting Collabora Docker Container...'
+sleep 1
+
 cd /opt/$SITE_NAME-Collabora && /usr/local/bin/docker-compose up -d
 
 stop_spinner $?
 
-            echo "FINISHED INSTALLATION. ENSURE COLLABORA DOCKER CONTAINER IS UP AND RUNNING" | boxes -d stone -p a2v1
-            echo "[`date +%m/%d/%Y-%H:%M`] FINISHED INSTALLATION. ENSURE COLLABORA DOCKER CONTAINER IS UP AND RUNNING" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-            echo "Access Collabora by navigating with your web browser to https://$COLLABORA_HOSTNAME.$COLLABORA_DOMAIN"  | boxes -d stone -p a2v1
+echo "FINISHED INSTALLATION. ENSURE COLLABORA DOCKER CONTAINER IS UP AND RUNNING" | boxes -d stone -p a2v1
+
+echo "[`date +%m/%d/%Y-%H:%M`] FINISHED INSTALLATION. ENSURE COLLABORA DOCKER CONTAINER IS UP AND RUNNING" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+            
+echo "Access Collabora by navigating with your web browser to https://$COLLABORA_HOSTNAME.$COLLABORA_DOMAIN"  | boxes -d stone -p a2v1
 
 
 
