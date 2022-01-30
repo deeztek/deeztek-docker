@@ -29,11 +29,13 @@ echo "Installing Boxes Prerequisite"
 #Install boxes and apache2-utils
 apt-get install boxes -y > /dev/null 2>&1
 
-if [ $? -eq 0 ]; then
-    echo "${GREEN}Done ${RESET}"
+ERR=$?
+if [ $ERR != 0 ]; then
+THEERROR=$(($THEERROR+$ERR))
+echo "${RED}Error $THEERROR, occurred Installing Boxes Prerequisite ${RESET}"
+exit 1
 else
-        echo "${RED}Error Installing Boxes Prerequisite ${RESET}"
-        exit 1
+echo "${GREEN}Done ${RESET}"
 fi
 
 echo "Installing Spinner Prerequisite"
@@ -46,7 +48,7 @@ THEERROR=$(($THEERROR+$ERR))
 echo "${RED}Error $THEERROR, occurred Installing Spinner Prerequisite ${RESET}"
 exit 1
 else
-echo "${GREEN}Completed Installing Spinner Prerequisite ${RESET}"
+echo "${GREEN}Done ${RESET}"
 fi
 
 
@@ -99,7 +101,7 @@ export SITE_NAME
 
 
 
-read -p "Enter the Collabora Hostname you wish to use (Example: office):"  COLLABORA_HOSTNAME
+read -p "Enter the Collabora Hostname you wish to use (Example: collabora):"  COLLABORA_HOSTNAME
 
 if [ -z "$COLLABORA_HOSTNAME" ]
 then
@@ -110,12 +112,12 @@ fi
 #Export the variable
 export COLLABORA_HOSTNAME
 
-read -p "Enter the Collabora Subdomain you wish to use (Example: domain.tld):"  COLLABORA_DOMAIN
+read -p "Enter the Collabora Domain you wish to use (Example: domain.tld):"  COLLABORA_DOMAIN
 
 if [ -z "$COLLABORA_DOMAIN" ]
 then
    
-      echo "${RED}Collabora Subdomain cannot be empty ${RESET}"
+      echo "${RED}Collabora Domain cannot be empty ${RESET}"
       exit
 fi
 
@@ -160,48 +162,50 @@ start_spinner 'sleeping for 2 secs...'
 sleep 2
 stop_spinner $?
 
+echo "[`date +%m/%d/%Y-%H:%M`] Creating docker-compose.yml file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
 start_spinner 'Creating docker-compose.yml...'
 sleep 1
 
-echo "[`date +%m/%d/%Y-%H:%M`] Creating docker-compose.yml file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-/bin/cp $SCRIPTPATH/templates/collabora-docker-compose-template.yml /opt/$SITE_NAME-Collabora/docker-compose.yml
+/bin/cp $SCRIPTPATH/templates/collabora-docker-compose-template.yml /opt/$SITE_NAME-Collabora/docker-compose.yml >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/$SITE_NAME-Collabora/.env file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Creating .env file...'
 sleep 1
 
-echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/$SITE_NAME-Collabora/.env file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
 #create /opt/$SITE_NAME-Collabora/.env
-/bin/cp -r $SCRIPTPATH/templates/.env-template /opt/$SITE_NAME-Collabora/.env
+/bin/cp -r $SCRIPTPATH/templates/.env-template /opt/$SITE_NAME-Collabora/.env >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Configuring .env file with Collabora Hostname...'
 sleep 1
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-/bin/sed -i -e "s,COLLABORAHOSTNAME,${COLLABORA_HOSTNAME},g" "/opt/$SITE_NAME-Collabora/.env"
+/bin/sed -i -e "s,COLLABORAHOSTNAME,${COLLABORA_HOSTNAME},g" "/opt/$SITE_NAME-Collabora/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-start_spinner 'Configuring .env file with Collabora Subdomain...'
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Configuring .env file with Collabora Domain...'
 sleep 1
 
-
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Subdomain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-/bin/sed -i -e "s,COLLABORADOMAIN,${COLLABORA_DOMAIN},g" "/opt/$SITE_NAME-Collabora/.env"
+/bin/sed -i -e "s,COLLABORADOMAIN,${COLLABORA_DOMAIN},g" "/opt/$SITE_NAME-Collabora/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Creating Random Collabora Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Creating Random Collabora Username...'
 sleep 1
 
-COLLABORA_USERNAME=`/bin/cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${1:-10} | head -n 1`
+COLLABORA_USERNAME=`/bin/cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${1:-10} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -209,11 +213,12 @@ echo "[`date +%m/%d/%Y-%H:%M`] Random Collabora Username is: $COLLABORA_USERNAME
 
 echo "Random Collabora Username is: $COLLABORA_USERNAME" | boxes -d stone -p a2v1
 
+echo "[`date +%m/%d/%Y-%H:%M`] Creating Random Collabora Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Creating Random Collabora Password...'
 sleep 1
 
-COLLABORA_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-20} | head -n 1`
+COLLABORA_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-20} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -221,21 +226,21 @@ echo "[`date +%m/%d/%Y-%H:%M`] Random Collabora Password is: $COLLABORA_PASSWORD
 
 echo "Random Collabora Password is: $COLLABORA_PASSWORD" | boxes -d stone -p a2v1
 
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
 start_spinner 'Configuring .env file with Collabora Username...'
 sleep 1
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-/bin/sed -i -e "s,COLLABORAUSERNAME,${COLLABORA_USERNAME},g" "/opt/$SITE_NAME-Collabora/.env"
+/bin/sed -i -e "s,COLLABORAUSERNAME,${COLLABORA_USERNAME},g" "/opt/$SITE_NAME-Collabora/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Configuring .env file with Collabora Password...'
 sleep 1
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-/bin/sed -i -e "s,COLLABORAPASSWORD,${COLLABORA_PASSWORD},g" "/opt/$SITE_NAME-Collabora/.env"
+/bin/sed -i -e "s,COLLABORAPASSWORD,${COLLABORA_PASSWORD},g" "/opt/$SITE_NAME-Collabora/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -243,33 +248,32 @@ stop_spinner $?
 
 #=== CONFIGURE /opt/$SITE_NAME-Collabora/docker-compose.yml STARTS HERE ===
 
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/docker-compose.yml file with network name of Traefik container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
 start_spinner 'Configuring docker-compose.yml file with with network name of Traefik container...'
 sleep 1
 
-
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/docker-compose.yml file with network name of Traefik container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-/bin/sed -i -e "s,TRAEFIKNETWORK,${TRAEFIK_NETWORK},g" "/opt/$SITE_NAME-Collabora/docker-compose.yml"
+/bin/sed -i -e "s,TRAEFIKNETWORK,${TRAEFIK_NETWORK},g" "/opt/$SITE_NAME-Collabora/docker-compose.yml" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/docker-compose.yml file with Collabora Site Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Configuring docker-compose.yml file with Collabora Site Name...'
 sleep 1
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/docker-compose.yml file with Collabora Site Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-/bin/sed -i -e "s,SITENAME,${SITE_NAME},g" "/opt/$SITE_NAME-Collabora/docker-compose.yml"
+/bin/sed -i -e "s,SITENAME,${SITE_NAME},g" "/opt/$SITE_NAME-Collabora/docker-compose.yml" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 #=== CONFIGURE /opt/$SITE_NAME-Collabora/docker-compose.yml ENDS HERE ===
 
+echo "[`date +%m/%d/%Y-%H:%M`] Starting Collabora Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
 start_spinner 'Starting Collabora Docker Container...'
 sleep 1
 
-echo "[`date +%m/%d/%Y-%H:%M`] Starting Collabora Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-cd /opt/$SITE_NAME-Collabora && /usr/local/bin/docker-compose up -d
+cd /opt/$SITE_NAME-Collabora && /usr/local/bin/docker-compose up -d >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
