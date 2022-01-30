@@ -131,7 +131,7 @@ and running ${RESET}"
 /usr/bin/docker container ls --format 'table {{.Names}}\t{{.Networks}}'  | boxes -d stone -p a2v1
 
 
-read -p "Enter the network name of your Traefik container from the listing above (Example: proxy)"  TRAEFIK_NETWORK
+read -p "Enter the network name of your Traefik container from the listing above (Example: proxy):"  TRAEFIK_NETWORK
 
 if [ -z "$TRAEFIK_NETWORK" ]
 then
@@ -226,7 +226,7 @@ sleep 1
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-/bin/sed -i -e "s,COLLABORAUSERNAME,${$COLLABORA_USERNAME},g" "/opt/$SITE_NAME-Collabora/.env"
+/bin/sed -i -e "s,COLLABORAUSERNAME,${COLLABORA_USERNAME},g" "/opt/$SITE_NAME-Collabora/.env"
 
 stop_spinner $?
 
@@ -235,7 +235,7 @@ sleep 1
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/$SITE_NAME-Collabora/.env file with Collabora Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-/bin/sed -i -e "s,COLLABORAPASSWORD,${$COLLABORA_PASSWORD},g" "/opt/$SITE_NAME-Collabora/.env"
+/bin/sed -i -e "s,COLLABORAPASSWORD,${COLLABORA_PASSWORD},g" "/opt/$SITE_NAME-Collabora/.env"
 
 stop_spinner $?
 
@@ -268,9 +268,6 @@ start_spinner 'Starting Collabora Docker Container...'
 sleep 1
 
 echo "[`date +%m/%d/%Y-%H:%M`] Starting Collabora Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Starting Collabora Docker Container...'
-sleep 1
 
 cd /opt/$SITE_NAME-Collabora && /usr/local/bin/docker-compose up -d
 
