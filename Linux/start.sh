@@ -59,6 +59,12 @@ do
             cd -
             break
             ;;
+
+    "Install Collabora")
+            cd collabora/ && bash ubuntu_install_collabora.sh
+            cd -
+            break
+            ;;            
         
         "Exit")
             echo "Exiting...."
