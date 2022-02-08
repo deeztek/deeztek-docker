@@ -1,0 +1,49 @@
+upstream signaling {
+    server spreedbackend:8080;
+}
+
+server {
+    server_name SIGNALHOSTNAME.SIGNALDOMAIN;
+
+    listen 443 ssl; # managed by Certbot
+    root /config/www;
+    index index.html index.htm index.php;
+    #ssl_certificate /config/keys/cert.crt;
+    #ssl_certificate_key /config/keys/cert.key;
+    ssl_certificate /etc/nginx/ssl/dummy/SIGNALHOSTNAME.SIGNALDOMAIN/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/nginx/ssl/dummy/SIGNALHOSTNAME.SIGNALDOMAIN/privkey.pem; # managed by Certbot
+    #include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    #ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+    #add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";
+
+location /standalone-signaling/ {
+        proxy_pass http://signaling/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /standalone-signaling/spreed {
+        proxy_pass http://signaling/spreed;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+}
+server {
+    if ($host = SIGNALHOSTNAME.SIGNALDOMAIN) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    listen 80;
+    server_name SIGNALHOSTNAME.SIGNALDOMAIN;
+    return 404; # managed by Certbot
+
+
+}

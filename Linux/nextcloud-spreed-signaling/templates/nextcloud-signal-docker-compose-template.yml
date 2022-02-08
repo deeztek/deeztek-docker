@@ -1,0 +1,105 @@
+version: '3'
+
+networks:
+  spreed:
+    external: true
+
+services:
+
+  nginx:
+    image: lscr.io/linuxserver/nginx
+    container_name: nextcloud_spreed_nginx
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - ./nginx/conf:/config
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+    networks:
+      - spreed
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+    depends_on:
+      - spreedbackend
+      - nats
+      - janus
+      - coturn
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: nextcloud_spreed_certbot
+    networks:
+      - spreed
+    volumes:
+      - ./nginx/conf/www:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+    depends_on:
+      - nginx
+
+
+  spreedbackend:
+    build: .
+    volumes:
+      - ./server.conf:/config/server.conf
+    #network_mode: host
+    networks:
+      - spreed
+    #ports:
+      #- 8080:8080
+    container_name: nextcloud_spreed_backend
+    logging:
+      options:
+        max-size: 10m
+    restart: unless-stopped
+    depends_on:
+      - nats
+      - janus
+      - coturn
+
+  nats:
+    image: nats:2.1
+    volumes:
+      - ./gnatsd.conf:/config/gnatsd.conf
+    command: ["-c", "/config/gnatsd.conf"]
+    #network_mode: host
+    networks:
+      - spreed
+    container_name: nextcloud_spreed_nats
+    logging:
+      options:
+        max-size: 10m
+    restart: unless-stopped
+
+  janus:
+    build: docker/janus
+    command: ["janus", "--full-trickle"]
+    #network_mode: host
+    networks:
+      - spreed
+    container_name: nextcloud_spreed_janus
+    logging:
+      options:
+        max-size: 10m
+    restart: unless-stopped
+
+  coturn:
+    build: docker/coturn
+    #network_mode: host
+    networks:
+      - spreed
+    ports:
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+    container_name: nextcloud_spreed_coturn
+    logging:
+      options:
+        max-size: 10m
+    environment:
+      REALM: ${SIGNAL_DOMAIN}
+      STATIC_SECRET: ${STATIC_SECRET}
+    restart: unless-stopped
+
+
