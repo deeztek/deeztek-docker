@@ -1,6 +1,6 @@
 ## About
 
-Spreed standalone signaling server.
+Spreed standalone signaling server for Nextcloud.
 
 For more information please visit [https://github.com/strukturag/nextcloud-spreed-signaling](https://github.com/strukturag/nextcloud-spreed-signaling).
 
@@ -8,7 +8,7 @@ Original Credit and Inspiration: [MARKUS WEINGÄRTNER](https://markus-blog.de/in
 
 ## General Requirements
 
-Spreed standalone signaling server requires that you have a fully updated Ubuntu 18.04 (also tested successfully on Ubuntu 20.04) machine with Docker and Docker Compose.
+Spreed standalone signaling server requires that you have a fully updated Ubuntu 18.04 (also tested successfully on Ubuntu 20.04) machine with Docker and Docker Compose as well as a fully functioning Nextcloud installation.
 
 
 ## Prerequisites
