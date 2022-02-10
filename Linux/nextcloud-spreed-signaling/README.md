@@ -107,7 +107,7 @@ Next navigate to **Settings --> Administration --> Talk**.
 
 In the **STUN servers** section, enter the FQDN of your Nextcloud-Signal instance on port 3478 (Example: signal.domain.tld:3478), in the **TURN severs** section, select **turn: and turns:** on the drop-down and enter enter the FQDN of your Nextcloud-Signal instance on port 3478 (Example: signal.domain.tld:3478) and enter the **Static Secret** variable that was output earlier in the **secret** field. 
 
-In the High-performance backend section, click the + button and enter **https://signal.domain.tld/standalone/signaling/** where **signal.domain.tld** is tha actual FQDN of your Nextcloud-Signal instance and in the **Shared secret** field enter the **Shared Secret** variable that was output ealier (**Figure 1**):
+In the High-performance backend section, click the + button and enter **https://signal.domain.tld/standalone-signaling/** where **signal.domain.tld** is tha actual FQDN of your Nextcloud-Signal instance and in the **Shared secret** field enter the **Shared Secret** variable that was output ealier (**Figure 1**):
 
 **Figure 1**
 
