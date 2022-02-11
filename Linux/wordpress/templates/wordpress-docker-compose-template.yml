@@ -1,0 +1,156 @@
+version: '3.3'
+
+networks:
+  TRAEFIKNETWORK:
+    external: true
+
+
+services:
+  wordpress_db:
+    image: mysql:5.7
+    container_name: wordpress_db_SITENAME
+    logging:
+      options:
+        max-size: 10m
+    volumes:
+      - db:/var/lib/mysql
+      - db_backups:/db_backups
+    restart: always
+    environment:
+      PUID: ${PUID}
+      GUID: ${GUID}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USERNAME}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+    networks: 
+      - TRAEFIKNETWORK
+
+  wordpress:
+    depends_on:
+      - wordpress_db
+    image: wordpress:latest
+    container_name: wordpress_SITENAME
+    logging:
+      options:
+        max-size: 10m
+    #ports:
+      #- "8000:80"
+    expose:
+      - 80
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: wordpress_db:3306
+      WORDPRESS_DB_USER: ${MYSQL_USERNAME}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'http://${HOST}.${DOMAIN}');
+        define('WP_SITEURL', 'http://${HOST}.${DOMAIN}');
+    volumes:
+      - wordpress:/var/www/html      
+    networks:
+      - TRAEFIKNETWORK
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=TRAEFIKNETWORK"
+
+      # Routers
+      - "traefik.http.routers.wp-SITENAME.entrypoints=http"
+      - "traefik.http.routers.wp-SITENAME.rule=Host(`${HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.wp-SITENAME.middlewares=wp-https-redirect-SITENAME"
+      - "traefik.http.routers.wp-secure-SITENAME.entrypoints=https"
+      - "traefik.http.routers.wp-secure-SITENAME.rule=Host(`${HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.wp-secure-SITENAME.tls=true"
+      #- "traefik.http.routers.wp-secure-SITENAME.tls.certresolver=le"
+      - "traefik.http.routers.wp-secure-SITENAME.service=wp-SITENAME"
+
+      # Service definition
+      - "traefik.http.services.wp-SITENAME.loadbalancer.server.port=80"
+
+      # Middleware definitions
+      - "traefik.http.middlewares.wp-https-redirect-SITENAME.redirectscheme.scheme=https"
+
+      - "traefik.passHostHeader=true"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+
+
+  wordpress_db_cron:
+    image: 'mcuadros/ofelia:latest'
+    container_name: wordpress_db_cron_SITENAME
+    environment:
+      - "TZ=$TZ"
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config/config.ini:/etc/ofelia/config.ini
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+
+volumes:
+  db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: WORDPRESSDATAPATH/SITENAME/db
+
+  db_backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: WORDPRESSDATAPATH/SITENAME/db_backups
+
+  wordpress:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: WORDPRESSDATAPATH/SITENAME/wordpress
+
+#Uncomment below to use db_backups volume
+  #db_backups:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=smbdomain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/db_backups"
+
+
+  #db_backups:
+#Uncomment below to use NFS for db_backups volume
+    #driver: local
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.168.xxx.xxx,nolock,soft,rw
+      #device: :/mnt/db_backups
+
+
+#Uncomment below to use wordpress volume
+  #wordpress:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbuser,password=smbpass,domain=smbdomain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      #device: "//192.168.xxx.xxx/wordpress"
+
+
+  #wordpress:
+#Uncomment below to use NFS for wordpress volume
+    #driver: local
+    #driver_opts:
+      #type: nfs
+      #o: addr=192.168.xxx.xxx,nolock,soft,rw
+      #device: :/mnt/wordpress
+
+
+
+
