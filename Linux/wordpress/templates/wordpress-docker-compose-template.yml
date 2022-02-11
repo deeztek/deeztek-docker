@@ -6,7 +6,7 @@ networks:
 
 
 services:
-  wordpress_db:
+  wordpress_db_SITENAME:
     image: mysql:5.7
     container_name: wordpress_db_SITENAME
     logging:
@@ -27,9 +27,9 @@ services:
     networks: 
       - TRAEFIKNETWORK
 
-  wordpress:
+  wordpress_SITENAME:
     depends_on:
-      - wordpress_db
+      - wordpress_db_SITENAME
     image: wordpress:latest
     container_name: wordpress_SITENAME
     logging:
@@ -41,7 +41,7 @@ services:
       - 80
     restart: always
     environment:
-      WORDPRESS_DB_HOST: wordpress_db:3306
+      WORDPRESS_DB_HOST: wordpress_db_SITENAME:3306
       WORDPRESS_DB_USER: ${MYSQL_USERNAME}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
@@ -80,7 +80,7 @@ services:
 
 
 
-  wordpress_db_cron:
+  wordpress_db_cron_SITENAME:
     image: 'mcuadros/ofelia:latest'
     container_name: wordpress_db_cron_SITENAME
     environment:
