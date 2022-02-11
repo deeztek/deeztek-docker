@@ -27,11 +27,11 @@ services:
     networks: 
       - TRAEFIKNETWORK
 
-  wordpress_SITENAME:
+  wordpress_site_SITENAME:
     depends_on:
       - wordpress_db_SITENAME
     image: wordpress:latest
-    container_name: wordpress_SITENAME
+    container_name: wordpress_site_SITENAME
     logging:
       options:
         max-size: 10m
