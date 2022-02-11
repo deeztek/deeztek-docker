@@ -277,7 +277,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file w
 start_spinner 'Configuring .env file with Wordpress Hostname...'
 sleep 1
 
-/bin/sed -i -e "s,HOST,${WORDPRESS_HOSTNAME},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s,WORDPRESSHOSTNAME,${WORDPRESS_HOSTNAME},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -288,7 +288,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file w
 start_spinner 'Configuring .env file with Wordpress Domain...'
 sleep 1
 
-/bin/sed -i -e "s,DOMAIN,${WORDPRESS_DOMAIN},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s,WORDPRESSDOMAIN,${WORDPRESS_DOMAIN},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -298,7 +298,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Creating Random Wordpress MySQL/MariaDB root Pass
 start_spinner 'Creating Random Wordpress MySQL/MariaDB root Password...'
 sleep 1
 
-MYSQL_ROOT_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${1:-10} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+MYSQL_ROOT_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-20} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
