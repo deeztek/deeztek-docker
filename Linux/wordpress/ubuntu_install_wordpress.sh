@@ -350,6 +350,16 @@ sleep 1
 stop_spinner $?
 
 
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with MySQL/MariaDB Database Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Configuring .env file with MySQL/MariaDB Database Name...'
+sleep 1
+
+/bin/sed -i -e "s,MYSQLDATABASE,${MYSQL_DATABASE},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with MySQL/MariaDB Database Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Configuring .env file with MySQL/MariaDB Database Username...'
