@@ -102,14 +102,14 @@ fi
 #Export the variable
 export SITE_NAME
 
-read -p "Enter the Wordpress MySQL/MariaDB Root password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your password):"  MYSQL_ROOT_PASSWORD
+#read -p "Enter the Wordpress MySQL/MariaDB Root password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your password):"  MYSQL_ROOT_PASSWORD
 
-if [ -z "$MYSQL_ROOT_PASSWORD" ]
-then
+#if [ -z "$MYSQL_ROOT_PASSWORD" ]
+#then
 
-      echo "${RED}Wordpress MySQL/MariaDB Root password cannot be empty ${RESET}"
-      exit
-fi
+#      echo "${RED}Wordpress MySQL/MariaDB Root password cannot be empty ${RESET}"
+#      exit
+#fi
 
 #read -p "Enter the Wordpress MySQL/MariaDB Database Username you wish to use with no spaces or special characters (Example: wordpress):"  MYSQL_USERNAME
 
@@ -120,14 +120,14 @@ fi
 #      exit
 #fi
 
-read -p "Enter the Wordpress MySQL/MariaDB Database Password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your Username):"  MYSQL_PASSWORD
+#read -p "Enter the Wordpress MySQL/MariaDB Database Password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your Username):"  MYSQL_PASSWORD
 
-if [ -z "$MYSQL_PASSWORD" ]
-then
+#if [ -z "$MYSQL_PASSWORD" ]
+#then
 
-      echo "${RED}Wordpress MySQL/MariaDB Database Password cannot be empty ${RESET}"
-      exit
-fi
+#      echo "${RED}Wordpress MySQL/MariaDB Database Password cannot be empty ${RESET}"
+#      exit
+#fi
 
 read -p "Enter the Wordpress MySQL/MariaDB Database Name you wish to use with no spaces or special characters (Example: wordpress_db):"  MYSQL_DATABASE
 
@@ -293,6 +293,20 @@ sleep 1
 stop_spinner $?
 
 
+echo "[`date +%m/%d/%Y-%H:%M`] Creating Random Wordpress MySQL/MariaDB root Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Creating Random Wordpress MySQL/MariaDB root Password...'
+sleep 1
+
+MYSQL_ROOT_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${1:-10} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+
+echo "[`date +%m/%d/%Y-%H:%M`] Random Wordpress MySQL/MariaDB root Password is: $MYSQL_ROOT_PASSWORD" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+echo "Random Wordpress MySQL/MariaDB root Password is:${GREEN} $MYSQL_ROOT_PASSWORD ${RESET}" | boxes -d stone -p a2v1
+
 
 echo "[`date +%m/%d/%Y-%H:%M`] Creating Random Wordpress MySQL/MariaDB Database Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
@@ -302,7 +316,6 @@ sleep 1
 MYSQL_USERNAME=`/bin/cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${1:-10} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
-
 
 
 echo "[`date +%m/%d/%Y-%H:%M`] Random Wordpress MySQL/MariaDB Database Username is: $MYSQL_USERNAME" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
@@ -321,10 +334,21 @@ MYSQL_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-20} | 
 stop_spinner $?
 
 
-
 echo "[`date +%m/%d/%Y-%H:%M`] Random Wordpress MySQL/MariaDB Database Password is: $MYSQL_PASSWORD" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 echo "Random Wordpress MySQL/MariaDB Database Password is:${GREEN} $MYSQL_PASSWORD ${RESET}" | boxes -d stone -p a2v1
+
+
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with MySQL/MariaDB root Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Configuring .env file with MySQL/MariaDB root Password..'
+sleep 1
+
+/bin/sed -i -e "s,MYSQLROOTPASSWORD,${MYSQL_ROOT_PASSWORD},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with MySQL/MariaDB Database Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
