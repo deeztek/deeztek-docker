@@ -34,7 +34,7 @@ services:
       - "traefik.http.routers.collabora-secure-SITENAME.entrypoints=https"
       - "traefik.http.routers.collabora-secure-SITENAME.rule=Host(`${HOST}.${DOMAIN}`)"
       - "traefik.http.routers.collabora-secure-SITENAME.tls=true"
-      - "traefik.http.routers.collabora-secure-SITENAME.tls.certresolver=le"
+      #- "traefik.http.routers.collabora-secure-SITENAME.tls.certresolver=le"
       - "traefik.http.routers.collabora-secure-SITENAME.service=collabora-SITENAME"
 
       # Service definition
