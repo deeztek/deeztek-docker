@@ -46,8 +46,8 @@ services:
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
       WORDPRESS_CONFIG_EXTRA: |
-        define('WP_HOME', 'http://${HOST}.${DOMAIN}');
-        define('WP_SITEURL', 'http://${HOST}.${DOMAIN}');
+        define('WP_HOME', 'http://${WORDPRESS_DOMAIN}');
+        define('WP_SITEURL', 'http://${WORDPRESS_DOMAIN}');
     volumes:
       - wordpress:/var/www/html      
     networks:
@@ -59,10 +59,10 @@ services:
 
       # Routers
       - "traefik.http.routers.wp-SITENAME.entrypoints=http"
-      - "traefik.http.routers.wp-SITENAME.rule=Host(`${HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.wp-SITENAME.rule=Host(${WORDPRESS_ALLDOMAIN})"
       - "traefik.http.routers.wp-SITENAME.middlewares=wp-https-redirect-SITENAME"
       - "traefik.http.routers.wp-secure-SITENAME.entrypoints=https"
-      - "traefik.http.routers.wp-secure-SITENAME.rule=Host(`${HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.wp-secure-SITENAME.rule=Host(${WORDPRESS_ALLDOMAIN})"
       - "traefik.http.routers.wp-secure-SITENAME.tls=true"
       #- "traefik.http.routers.wp-secure-SITENAME.tls.certresolver=le"
       - "traefik.http.routers.wp-secure-SITENAME.service=wp-SITENAME"

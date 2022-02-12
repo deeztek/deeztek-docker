@@ -139,29 +139,33 @@ then
 fi
 
 
-
-read -p "Enter the Wordpress Hostname you wish to use (Example: Wordpress):"  WORDPRESS_HOSTNAME
-
-if [ -z "$WORDPRESS_HOSTNAME" ]
-then
-      echo "${RED}Wordpress Hostname cannot be empty ${RESET}"
-      exit
-fi
-
-#Export the variable
-export WORDPRESS_HOSTNAME
-
-read -p "Enter the Wordpress Domain you wish to use (Example: domain.tld):"  WORDPRESS_DOMAIN
+read -p "Enter a PRIMARY ROOT domain for Wordpress INCLUDING www. in front if applicable (Example: www.domain.tld OR host.domain.tld):"  WORDPRESS_DOMAIN
 
 if [ -z "$WORDPRESS_DOMAIN" ]
 then
-   
-      echo "${RED}Wordpress Domain cannot be empty ${RESET}"
+      echo "${RED}PRIMARY ROOT domain for Wordpress cannot be empty ${RESET}"
       exit
 fi
 
 #Export the variable
 export WORDPRESS_DOMAIN
+
+
+read -p "Enter additional domain for Wordpress (Example: domain.tld) OR leave blank and press enter if none: "  WORDPRESS_SECDOMAIN
+
+#Export the variable
+export WORDPRESS_SECDOMAIN
+
+
+#IF WORDPRESS_SECDOMAIN IS EMPTY THEN SET WORDPRESS_ALLDOMAIN TO $WORDPRESS_DOMAIN IF NOT SET WORDPRESS_ALLDOMAIN TO $WORDPRESS_DOMAIN AND $WORDPRESS_SECDOMAIN
+if [ -z "$WORDPRESS_SECDOMAIN" ]
+then
+WORDPRESS_ALLDOMAIN=$WORDPRESS_DOMAIN
+     
+else
+WORDPRESS_ALLDOMAIN="`${WORDPRESS_DOMAIN}`,`${WORDPRESS_SECDOMAIN}`"
+    
+fi
 
 #Output containers and their networks
 echo "${GREEN}Below is a listing of your containers and their associated networks.
@@ -270,25 +274,15 @@ stop_spinner $?
 
 
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with Wordpress Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with Wordpress Domain(s)" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 #=== CONFIGURE /opt/Wordpress-$SITE_NAME/.env STARTS HERE ===
 
-start_spinner 'Configuring .env file with Wordpress Hostname...'
+start_spinner 'Configuring .env file with Wordpress Domain(s)...'
 sleep 1
 
-/bin/sed -i -e "s,WORDPRESSHOSTNAME,${WORDPRESS_HOSTNAME},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-stop_spinner $?
-
-
-
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with Wordpress Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Configuring .env file with Wordpress Domain...'
-sleep 1
-
-/bin/sed -i -e "s,WORDPRESSDOMAIN,${WORDPRESS_DOMAIN},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s,WORDPRESSDOMAIN,${WORDPRESS_DOMAIN},g" "/opt/Wordpress-$SITE_NAME/.env" && \
+/bin/sed -i -e "s,WORDPRESSALLDOMAIN,${WORDPRESS_ALLDOMAIN},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -448,7 +442,7 @@ echo "FINISHED INSTALLATION. ENSURE Wordpress DOCKER CONTAINER IS UP AND RUNNING
 
 echo "[`date +%m/%d/%Y-%H:%M`] FINISHED INSTALLATION. ENSURE Wordpress DOCKER CONTAINER IS UP AND RUNNING" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
             
-echo "Access Wordpress by navigating with your web browser to https://$WORDPRESS_HOSTNAME.$WORDPRESS_DOMAIN"  | boxes -d stone -p a2v1
+echo "Access Wordpress by navigating with your web browser to https://$WORDPRESS_DOMAIN"  | boxes -d stone -p a2v1
 
 
 
