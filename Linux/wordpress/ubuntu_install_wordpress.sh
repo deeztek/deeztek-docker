@@ -163,7 +163,7 @@ then
 WORDPRESS_ALLDOMAIN=$WORDPRESS_DOMAIN
      
 else
-WORDPRESS_ALLDOMAIN="`${WORDPRESS_DOMAIN}`,`${WORDPRESS_SECDOMAIN}`"
+WORDPRESS_ALLDOMAIN="\`${WORDPRESS_DOMAIN}\`,\`${WORDPRESS_SECDOMAIN}\`"
     
 fi
 
@@ -281,8 +281,8 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file w
 start_spinner 'Configuring .env file with Wordpress Domain(s)...'
 sleep 1
 
-/bin/sed -i -e "s,WORDPRESSDOMAIN,${WORDPRESS_DOMAIN},g" "/opt/Wordpress-$SITE_NAME/.env" && \
-/bin/sed -i -e "s,WORDPRESSALLDOMAIN,${WORDPRESS_ALLDOMAIN},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s,WORDPRESSDOMAIN,${WORDPRESS_DOMAIN},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s/WORDPRESSALLDOMAIN/${WORDPRESS_ALLDOMAIN}/g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
