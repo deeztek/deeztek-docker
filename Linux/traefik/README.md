@@ -69,8 +69,7 @@ Once a Lets Encrypt staging certificate has been successfully issued for your co
 
 * Shutdown and start any containers that need to get a Lets Encrypt production certificate using the following command where **/opt/CONTAINER** is the path and the name of the container:
 
-`cd /opt/CONTAINER && docker-compose down`
-`cd /opt/CONTAINER && docker-compose up -d`
+`cd /opt/CONTAINER && docker-compose down && docker-compose up -d`
 
 NOTE: Traefik is set by default to use ACME httpChallenge method to obtain certificates through the use of the following line in the **/opt/traefik/docker-compose.yml** file:
 
