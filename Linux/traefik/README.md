@@ -59,13 +59,9 @@ Once a Lets Encrypt staging certificate has been successfully issued for your co
 
 * Delete the container staging certificate contents from the **/opt/traefik/data/acme.json** file.
 
-* Shutdown the Traefik container using the following command:
+* Restart the Traefik container using the following command:
 
-`cd /opt/traefik && docker-compose down`
-
-* Start the Traefik container using the following command:
-
-`cd /opt/traefik && docker-compose up -d`
+`cd /opt/traefik && docker-compose down && docker-compose up -d`
 
 * Shutdown and start any containers that need to get a Lets Encrypt production certificate using the following command where **/opt/CONTAINER** is the path and the name of the container:
 
