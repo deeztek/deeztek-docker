@@ -14,7 +14,7 @@ Git clone the Docker repository:
 
 This will clone the repository and create a deeztek-docker directory in the directory you ran the git clone command from.
 
-Change to the portainer directory:
+Change to the deeztek-docker directory:
 
 `cd deeztek-docker/Linux/`
 
