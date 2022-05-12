@@ -1,0 +1,37 @@
+version: '3'
+services:
+    haproxy:
+        container_name: exchange_haproxy
+        environment:
+            - CERTS=domain.tld  #domain for which to request LE certificate
+            - EMAIL=someone@domain.tld  #Email address for LE notifications
+            - STAGING=true #set to false after successfully getting LE certificate in staging environment
+        volumes:
+            - '$PWD/data/letsencrypt:/etc/letsencrypt'
+            - '$PWD/config/haproxy.cfg:/etc/haproxy/haproxy.cfg'  #edit /config/haproxy.cfg to suit your needs. The /config/haproxy.cfg is configured to be used as an Exchange load balancer but it can be adapted for a variety of uses.
+        networks:
+            - lbnet
+        ports:
+            - '80:80'
+            - '443:443'
+            - '8081:8081'
+        image: 'ghcr.io/tomdess/docker-haproxy-certbot:master'
+    nginx:
+        container_name: exchange_nginx
+        networks:
+            - lbnet
+        image: nginx
+    rsyslog:
+        container_name: exchange_rsyslog
+        environment:
+            - TZ=UTC
+        volumes:
+            - '$PWD/data/rsyslog/config:/config'
+        networks:
+            - lbnet
+        ports:
+            - '192.168.0.7:514:514'
+        image: 'rsyslog/syslog_appliance_alpine'
+
+networks:
+  lbnet:

@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  portainer:
+  haproxy:
     image: 'haproxy'
     container_name: myhaproxy
 
