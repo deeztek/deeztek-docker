@@ -1,0 +1,190 @@
+version: '3'
+
+networks:
+  proxy:
+    external: true
+
+services:
+  mysql:
+    image: mariadb:10.4
+    container_name: mailtrain_db
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+    environment:
+    - MYSQL_ROOT_PASSWORD=MYSQL_ROOT_PASSWORD
+    - MYSQL_DATABASE=mailtrain
+    - MYSQL_USER=mailtrain
+    - MYSQL_PASSWORD=MAILTRAIN_DB_PASSWORD
+    volumes:
+    - mysql-data:/var/lib/mysql
+    networks:
+      - proxy
+
+
+  redis:
+    image: redis:5
+    container_name: mailtrain_redis
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+    volumes:
+    - redis-data:/data
+    networks:
+      - proxy
+
+
+  mongo:
+    image: mongo:4-xenial
+    container_name: mailtrain_mongo
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+    volumes:
+    - mongo-data:/data/db
+    networks:
+      - proxy
+
+
+  mailtrain:
+    image: mailtrain/mailtrain:latest
+    container_name: mailtrain_app
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+    ports:
+    - "3000:3000"
+    - "3003:3003"
+    - "3004:3004"
+    volumes:
+    - mailtrain-files:/app/server/files
+    networks:
+      - proxy
+    environment:
+    - URL_BASE_TRUSTED=https://mailtrain.domain.tld
+    - URL_BASE_SANDBOX=https://mailtrainsandbox.domain.tld
+    - URL_BASE_PUBLIC=https://lists.domain.tld
+    - WWW_PROXY=true
+    - ADMIN_PASSWORD=MAILTRAIN_ADMIN_PASSWORD
+    - MYSQL_USER=mailtrain
+    - MYSQL_PASSWORD=MAILTRAIN_DB_PASSWORD
+    - WITH_POSTFIXBOUNCE=true
+    - POSTFIXBOUNCE_PORT=5699
+    - POSTFIXBOUNCE_HOST=127.0.0.1
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      #Mailtrain Prod
+      # Routers
+      - "traefik.http.routers.mailtrainprod.entrypoints=http"
+      - "traefik.http.routers.mailtrainprod.rule=Host(`mailtrain.domain.tld`)"
+      - "traefik.http.routers.mailtrainprod.middlewares=mailtrainprod-https-redirect"
+      - "traefik.http.routers.mailtrainprod.service=mailtrainprod"
+      - "traefik.http.routers.mailtrainprod-secure.entrypoints=https"
+      - "traefik.http.routers.mailtrainprod-secure.rule=Host(`mailtrain.domain.tld`)"
+      - "traefik.http.routers.mailtrainprod-secure.tls=true"
+      #- "traefik.http.routers.mailtrainprod-secure.tls.certresolver=le"
+      - "traefik.http.routers.mailtrainprod-secure.service=mailtrainprod"
+
+      #Service definition
+      - "traefik.http.services.mailtrainprod.loadbalancer.server.port=3000"
+
+      #Middleware definitions
+      - "traefik.http.middlewares.mailtrainprod-https-redirect.redirectscheme.scheme=https"
+
+
+      #Mailtrain Sandbox
+      # Routers
+      - "traefik.http.routers.mailtraindev.entrypoints=http"
+      - "traefik.http.routers.mailtraindev.rule=Host(`mailtrainsandbox.domain.tld`)"
+      - "traefik.http.routers.mailtraindev.middlewares=mailtraindev-https-redirect"
+      - "traefik.http.routers.mailtraindev.service=mailtraindev"
+      - "traefik.http.routers.mailtraindev-secure.entrypoints=https"
+      - "traefik.http.routers.mailtraindev-secure.rule=Host(`mailtrainsandbox.domain.tld`)"
+      - "traefik.http.routers.mailtraindev-secure.tls=true"
+      #- "traefik.http.routers.mailtraindev-secure.tls.certresolver=le"
+      - "traefik.http.routers.mailtraindev-secure.service=mailtraindev"
+
+      #Service definition
+      - "traefik.http.services.mailtraindev.loadbalancer.server.port=3003"
+
+      #Middleware definitions
+      - "traefik.http.middlewares.mailtraindev-https-redirect.redirectscheme.scheme=https"
+
+      #Mailtrain Public
+      # Routers
+      - "traefik.http.routers.mailtrainpublic.entrypoints=http"
+      - "traefik.http.routers.mailtrainpublic.rule=Host(`lists.domain.tld`)"
+      - "traefik.http.routers.mailtrainpublic.middlewares=mailtrainpublic-https-redirect"
+      - "traefik.http.routers.mailtrainpublic.service=mailtrainpublic"
+      - "traefik.http.routers.mailtrainpublic-secure.entrypoints=https"
+      - "traefik.http.routers.mailtrainpublic-secure.rule=Host(`lists.comain.tld`)"
+      - "traefik.http.routers.mailtrainpublic-secure.tls=true"
+      #- "traefik.http.routers.mailtrainpublic-secure.tls.certresolver=le"
+      - "traefik.http.routers.mailtrainpublic-secure.service=mailtrainpublic"
+
+      #Service definition
+      - "traefik.http.services.mailtrainpublic.loadbalancer.server.port=3004"
+
+      #Middleware definitions
+      - "traefik.http.middlewares.mailtrainpublic-https-redirect.redirectscheme.scheme=https"
+
+  ofelia:
+    image: 'mcuadros/ofelia:latest'
+    container_name: mailtrain_cron
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+    environment:
+      - "TZ=$TIMEZONE"
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config/config.ini:/etc/ofelia/config.ini
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+    depends_on:
+      - mailtrain
+
+
+volumes:
+  mysql-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/mailtrain/mysql-data
+
+
+  redis-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/mailtrain/redis-data
+
+
+  mongo-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/mailtrain/mongo-data
+
+  mailtrain-files:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/mailtrain/mailtrain-files
