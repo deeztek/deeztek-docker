@@ -10,17 +10,41 @@ services:
       - "21:21"
       - "30000-31000:30000-31000"
     volumes: # remember to replace /folder_on_disk/ with the path to where you want to store the files on the host machine
-      - "/folder_on_disk/data:/home/username/"
+      - "/ftp_root:/mnt/ftp"
       - "./passwd:/etc/pure-ftpd/passwd"
-# uncomment for ssl/tls, see https://github.com/stilliard/docker-pure-ftpd#tls
-#      - "/folder_on_disk/ssl:/etc/ssl/private/"
+# uncomment for ssl/tls (cert and key concatenated in one file), see https://github.com/stilliard/docker-pure-ftpd#tls
+#      - "./certs/pure-ftpd-cert.pem:/etc/ssl/private/"
+# or ssl/tls with Let's Encrypt (cert and key as two files)
+      #- "./certs/fullchain.crt:/etc/ssl/private/pure-ftpd-cert.pem"
+      #- "./certs/privkey.key:/etc/ssl/private/pure-ftpd-key.pem"
+
     environment:
-      PUBLICHOST: "localhost"
+      PUBLICHOST: "host.domain.tld"
       FTP_USER_NAME: username
       FTP_USER_PASS: mypass
       FTP_USER_HOME: /home/username
+      FTP_MAX_CLIENTS: 50
+      FTP_PASSIVE_PORTS: 30000:31000
+      FTP_MAX_CONNECTIONS: 5
       FTP_USER_UID: 33
       FTP_USER_GID: 33
 # also for ssl/tls:
       ADDED_FLAGS: "--tls=2" "-d -d"
     restart: always
+
+volumes:
+#Enable below for SMB/CIFS filesystem
+  #ftp_root:
+    #driver_opts:
+      #type: cifs
+      #o: vers=3.02,mfsymlinks,username=smbusername,password=smbpassword,file_mode=0777,dir_mode=0777,#iocharset=utf8
+      #device: "//192.168.xxx.xxx/shares/FTP Root"
+
+#Enable below for local filesystem
+  #ftp_root:
+    #driver: local
+    #driver_opts:
+      #type: none
+      #o: bind
+      #device: /mnt/data/ftp_root
+
