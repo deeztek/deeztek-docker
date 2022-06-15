@@ -1,0 +1,18 @@
+{
+    "datasources" : {
+             "datasourcename":{
+                     "host":"db_server",
+                     "dbdriver":"MySQL",
+                     "database":"db_name",
+                     "dsn":"jdbc:mysql://{host}:{port}/{database}",
+                     "custom":"useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=true&autoReconnect=true",
+                     "port":"3306",
+                     "class":"com.mysql.jdbc.Driver",
+                     "username":"db_username",
+                     "password":"db_password",
+                     "connectionLimit":"100",
+                     "connectionTimeout":"1"
+             }
+    }
+}
+

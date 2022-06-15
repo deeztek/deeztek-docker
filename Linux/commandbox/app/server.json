@@ -1,0 +1,26 @@
+{
+    "debug": false,
+    "trace": false,
+    "web": {
+    "errorPages" : {
+      "404" : "/app/inc/404.html",
+      "500" : "/app/inc/500.html",
+      "default" : "/app/inc/default.html"
+            },
+            "blockCFAdmin": "true",
+            "rewrites": {
+                    "enable": "true"
+            },
+
+            "debug": {
+                    "enable": "false"
+            }
+    },
+    "app": {
+            "sessionCookieSecure": true,
+            "sessionCookieHTTPOnly": true,
+            "openbrowser": false,
+            "debug": true
+    }
+
+}

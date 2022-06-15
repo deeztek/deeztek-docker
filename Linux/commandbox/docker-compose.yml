@@ -1,0 +1,47 @@
+version: '2.1'
+
+networks:
+  proxy:
+    external: true
+
+services:
+
+  commandbox_domain:
+    image: ortussolutions/commandbox
+    container_name: commandbox_domain
+    logging:
+      options:
+        max-size: 10m
+    networks:
+      - proxy
+    environment:
+      TZ: "$TIMEZONE"
+      cfconfig_adminPassword: ChangeMe
+      url_rewrites: "true"
+    volumes:
+      - ./app:/app #Application Directory
+      - ./custom:/custom #Custom Directory
+    restart: unless-stopped
+    ports:
+      - "8282:8080"
+
+  cron_domain:
+    image: 'mcuadros/ofelia:latest'
+    container_name: cron_domain
+    logging:
+      options:
+        max-size: 10m
+    environment:
+      - "TZ=$TIMEZONE"
+    volumes:
+      # the ofelia config file
+      - ./ofelia_config/config.ini:/etc/ofelia/config.ini
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock
+      # if you want to write a log for eace execution and view logs on the log -> I recommend to set this value
+      - ./ofelia_logs:/tmp/logs
+    restart: unless-stopped
+    depends_on:
+      - commandbox_domain
