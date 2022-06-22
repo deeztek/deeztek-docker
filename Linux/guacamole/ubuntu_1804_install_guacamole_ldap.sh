@@ -462,7 +462,8 @@ do
             echo "Starting Guacamole Docker Container"
             echo "[`date +%m/%d/%Y-%H:%M`] Starting Guacamole Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-            cd /opt/guacamole && /usr/local/bin/docker-compose up && /usr/local/bin/docker-compose down && /bin/cp $SCRIPTPATH/dbfix/pg_hba.conf /opt/guacamole/dbdata && /usr/local/bin/docker-compose up -d
+            cd /opt/guacamole && /usr/local/bin/docker-compose up -d && /usr/local/bin/docker-compose down && /bin/cp $SCRIPTPATH/deeztek-docker/Linux/guacamole/dbfix/pg_hba.conf /opt/guacamole/dbdata/ && /usr/local/bin/docker-compose up -d
+
 
             if [ $? -eq 0 ]; then
             echo "${GREEN}Done ${RESET}"
