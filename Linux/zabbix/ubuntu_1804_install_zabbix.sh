@@ -267,6 +267,7 @@ fi
 echo "Configuring /opt/zabbix-docker/.MYSQL_ROOT_PASSWORD file with Zabbix MySQL root password"
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.MYSQL_ROOT_PASSWORD file with Zabbix MySQL root password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
+touch /opt/zabbix-docker/.MYSQL_ROOT_PASSWORD
 /bin/sed -i -e "s,root_pwd,${MYSQL_ROOT},g" "/opt/zabbix-docker/.MYSQL_ROOT_PASSWORD"
 
 if [ $? -eq 0 ]; then
@@ -280,6 +281,7 @@ fi
 echo "Configuring /opt/zabbix-docker/.MYSQL_USER file with Zabbix MySQL database username"
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.MYSQL_USER file with Zabbix MySQL database Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
+touch /opt/zabbix-docker/.MYSQL_USER
 /bin/sed -i -e "s,zabbix,${MYSQL_USERNAME},g" "/opt/zabbix-docker/.MYSQL_USER"
 
 if [ $? -eq 0 ]; then
@@ -293,6 +295,7 @@ fi
 echo "Configuring /opt/zabbix-docker/.MYSQL_PASSWORD file with Zabbix MySQL database password"
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.MYSQL_PASSWORD file with Zabbix MySQL database password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
+touch /opt/zabbix-docker/.MYSQL_PASSWORD
 /bin/sed -i -e "s,zabbix,${MYSQL_PASSWORD},g" "/opt/zabbix-docker/.MYSQL_PASSWORD"
 
 if [ $? -eq 0 ]; then
