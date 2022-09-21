@@ -43,7 +43,7 @@ do
             ;;
 
         "Install Zabbix")
-            cd zabbix/ && bash ubuntu_1804_install_zabbix.sh
+            cd zabbix/ && bash ubuntu_install_zabbix.sh
             cd -
             break
             ;;

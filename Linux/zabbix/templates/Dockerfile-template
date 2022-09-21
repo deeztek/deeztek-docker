@@ -1,0 +1,4 @@
+FROM zabbix/zabbix-server-mysql:ubuntu-6.2-latest
+USER root
+SHELL ["/bin/bash", "-c"]
+RUN apt-get -y update && apt-get install -y sudo curl gnupg2 unixodbc-dev && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list && apt-get -y update && sudo env ACCEPT_EULA=Y apt-get -y install msodbcsql18 && sudo env ACCEPT_EULA=Y apt-get -y install mssql-tools18 && echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc && source ~/.bashrc

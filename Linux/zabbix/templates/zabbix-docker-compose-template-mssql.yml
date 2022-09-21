@@ -1,9 +1,13 @@
 version: '3.5'
 services:
  zabbix-server:
-  image: zabbix/zabbix-server-mysql:ubuntu-6.2-latest
+  #image: zabbix/zabbix-server-mysql:ubuntu-6.2-latest
+  build:
+    context: .
+    dockerfile: Dockerfile
   ports:
    - "10051:10051"
+  build: .
   dns:
    #- 192.168.xxx.xxx
    #- 192.168.xxx.xxx
@@ -11,6 +15,7 @@ services:
    - 8.8.4.4
   volumes:
    - /etc/localtime:/etc/localtime:ro
+   - ./zbx_env/odbc.ini:/etc/odbc.ini:ro #odbc.ini file
    - ./zbx_env/usr/lib/zabbix/alertscripts:/usr/lib/zabbix/alertscripts:ro
    - ./zbx_env/usr/lib/zabbix/externalscripts:/usr/lib/zabbix/externalscripts:ro
    - ./zbx_env/var/lib/zabbix/dbscripts:/var/lib/zabbix/dbscripts:ro
