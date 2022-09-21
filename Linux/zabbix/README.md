@@ -8,7 +8,7 @@ For more information and related downloads for Zabbix components, please visit h
 
 **General Requirements**
 
-Zabbix requires that you have a fully updated Ubuntu 18.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik](https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik).
+Zabbix requires that you have a fully updated **Ubuntu 20.04** machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik](https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik).
 
 **Installation**
 
@@ -24,7 +24,7 @@ Change to the zabbix directory:
 
 Run the following script as root:
 
-`sudo bash ubuntu_1804_install_zabbix.sh`
+`sudo bash ubuntu_install_zabbix.sh`
 
 **Backups**
 
