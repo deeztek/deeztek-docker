@@ -13,6 +13,13 @@ if [ `id -u` -ne 0 ]; then
       exit 1
    fi
 
+#Ensure Ubuntu 20.04 and if not exit
+if ! [[ "20.04" == *"$(lsb_release -rs)"* ]];
+then
+    echo "Ubuntu $(lsb_release -rs) is not currently supported.";
+    exit;
+fi
+
 #Check if /usr/bin/docker exists and if not exit
 if [ ! -f "/usr/bin/docker" ]; then
       echo "${RED}Docker does not seem to be installed. Please install Docker and try again. Exiting for now... ${RESET}"
