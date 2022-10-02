@@ -1,0 +1,39 @@
+version: '3.4'
+
+volumes:
+  database:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: AUTHENTIKDATAPATH/database
+
+  redis:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: AUTHENTIKDATAPATH/redis
+
+  geoip:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: AUTHENTIKDATAPATH/geoip
+
+  media:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: AUTHENTIKDATAPATH/media
+
+  custom-templates:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: AUTHENTIKDATAPATH/custom-templates
+
+
