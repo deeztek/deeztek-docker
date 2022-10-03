@@ -10,7 +10,7 @@ Softether VPN Server with Traefik support and automated Lets Encrypt Certificate
 `https://gitlab.deeztek.com/dedwards/docker.git`
 
 
-*  Adjust variables under **docker/Linux/softether/.env** file (Mainly Timezone (**TZ**) and domain (**DOMAIN**) variables
+*  Adjust variables under **docker/Linux/softether/.env** file: Timezone (**TZ**), host (**HOST**), domain (**DOMAIN**), Server Managemennt Password (**SPW**), Hub Management Password (**HPW**) and the IPSec/L2TP Pre-Shared Key (**PSK**).
 
 
 *  Adjust **/path/to/trafeik/acme.json** in **docker/Linux/softether/docker-compose.yml** file under the **certs --> Volumes** service and ensure it points to your existing **acme.json** file

@@ -14,6 +14,10 @@ services:
       - PGID=$GUID
       - TZ=$TZ
       - UMASK_SET=022 #optional
+      - SPW=$SPW
+      - HPW=$HPW
+      - PSK=$PSK
+
     volumes:
       - ./softether_config/vpnserver/vpn_server.config:/usr/vpnserver/vpn_server.config
       - ./certs/$HOST.$DOMAIN/fullchain.crt:/opt/server.crt
