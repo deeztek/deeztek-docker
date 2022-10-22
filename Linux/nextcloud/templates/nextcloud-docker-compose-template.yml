@@ -20,7 +20,7 @@ services:
     env_file:
       - db.env
     volumes:
-      - db:/config
+      - db:/var/lib/mysql
       - db_backups:/db_backups
     networks:
       - TRAEFIKNETWORK
