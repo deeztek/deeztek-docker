@@ -91,7 +91,7 @@ fi
 
 echo "Re-configuring Nginx for Certbot Certificate Production and Restarting Nginx Container"
 
-/bin/sed -i -e "s,dummy,live,g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default" && \
+/bin/sed -i -e "s,dummy,live,g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf" && \
 cd /opt/nextcloud-spreed-signaling && \
 /usr/local/bin/docker-compose stop nginx && \
 /usr/local/bin/docker-compose start nginx
