@@ -225,10 +225,10 @@ start_spinner 'Creating Creating Certbot Certificate Directory Structure...'
 sleep 1
 
 #create /opt/nextcloud-spreed-signaling/certbot/conf/dummy directory
-/usr/bin/mkdir -p /opt/nextcloud-spreed-signaling/certbot >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
-/usr/bin/mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
-/usr/bin/mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
-/usr/bin/mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+mkdir -p /opt/nextcloud-spreed-signaling/certbot >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
