@@ -1,0 +1,17 @@
+bin/
+vendor/
+
+*_easyjson.go
+*.pem
+*.pb.go
+*.prof
+*.socket
+*.tar.gz
+
+cover.out
+proxy.conf
+server.conf
+docker-compose.yml
+.env
+nginx/
+certbot/

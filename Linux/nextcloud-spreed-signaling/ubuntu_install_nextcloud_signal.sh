@@ -19,7 +19,7 @@ if [ ! -f "/usr/bin/docker" ]; then
       exit 1
    fi
 
-#Check if /usr/local/bin/docker-compose exists and if not exit
+#Check if docker-compose exists and if not exit
 if [ ! -f "/usr/local/bin/docker-compose" ]; then
       echo "${RED}Docker Compose does not seem to be installed. Please install Docker Compose and try again. Exiting for now... ${RESET}"
       exit 1
@@ -164,11 +164,21 @@ start_spinner 'Git cloning nextcloud-spreed-signaling to /opt/nextcloud-spreed-s
 sleep 1
 
 cd /opt/ >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
-/usr/bin/git clone https://github.com/strukturag/nextcloud-spreed-signaling.git >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+git clone https://github.com/strukturag/nextcloud-spreed-signaling.git >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 #=== CREATING FILES STARTS HERE ===
+
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/nextcloud-spreed-signaling/.gitignore file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Creating .gitignore file...'
+sleep 1
+
+#create /opt/nextcloud-spreed-signaling/.gitignore
+/bin/cp -r $SCRIPTPATH/templates/.gitignore-template /opt/nextcloud-spreed-signaling/.gitignore >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
 
 echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/nextcloud-spreed-signaling/.env file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
@@ -284,7 +294,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Generating Nextcloud Shared Secret Random String"
 start_spinner 'Generating Nextcloud Shared Secret Random String...'
 sleep 1
 
-SHARED_SECRET=`/usr/bin/openssl rand -hex 16` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+SHARED_SECRET=`/usr/bin/openssl rand -hex 32` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -439,7 +449,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Building Nextcloud-Signal Docker Containers" >> $
 start_spinner 'Building Nextcloud-Signal Docker Containers...'
 sleep 1
 
-cd /opt/nextcloud-spreed-signaling && /usr/local/bin/docker-compose build >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cd /opt/nextcloud-spreed-signaling && docker-compose build >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -449,7 +459,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Starting Nextcloud-Signal Docker Containers" >> $
 start_spinner 'Starting Nextcloud-Signal Docker Containers...'
 sleep 1
 
-cd /opt/nextcloud-spreed-signaling && /usr/local/bin/docker network create "spreed" && /usr/local/bin/docker-compose up -d >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cd /opt/nextcloud-spreed-signaling && /usr/local/bin/docker network create "spreed" && docker-compose up -d >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -459,14 +469,5 @@ echo "FINISHED INSTALLATION. ENSURE ALL CONTAINERS ARE UP AND RUNNING" | boxes -
 echo "[`date +%m/%d/%Y-%H:%M`] FINISHED INSTALLATION. ENSURE ALL CONTAINERS ARE UP AND RUNNING" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
             
 #echo "Access Nextcloud-Signal by navigating with your web browser to https://$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN"  | boxes -d stone -p a2v1
-
-
-
-
-
-
-
-
-
 
 
