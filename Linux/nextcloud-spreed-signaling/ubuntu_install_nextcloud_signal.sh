@@ -13,17 +13,27 @@ if [ `id -u` -ne 0 ]; then
       exit 1
    fi
 
-#Check if /usr/bin/docker exists and if not exit
-if [ ! -f "/usr/bin/docker" ]; then
-      echo "${RED}Docker does not seem to be installed. Please install Docker and try again. Exiting for now... ${RESET}"
-      exit 1
-   fi
 
-#Check if docker-compose exists and if not exit
-if [ ! -f "/usr/local/bin/docker-compose" ]; then
-      echo "${RED}Docker Compose does not seem to be installed. Please install Docker Compose and try again. Exiting for now... ${RESET}"
-      exit 1
-   fi
+#Check if docker exists and if not exit
+STR=`which docker`
+SUB='docker'
+if [[ "$STR" == *"$SUB"* ]]; then
+  echo "${GREEN}Docker Exists! Proceeding... ${RESET}"
+else
+   echo "${RED}Docker does not seem to be installed. Please install Docker and try again. Exiting for now... ${RESET}"
+exit 1
+fi
+
+#Check if docker compose exists and if not exit
+STR=`which docker-compose`
+SUB='docker-compose'
+if [[ "$STR" == *"$SUB"* ]]; then
+  echo "${GREEN}Docker Compose Exists! Proceeding... ${RESET}"
+else
+   echo "${RED}Docker Compose does not seem to be installed. Please install Docker Compose and try again. Exiting for now... ${RESET}"
+exit 1
+fi
+
 
 echo "Installing Boxes Prerequisite"
 #Install boxes and apache2-utils
@@ -459,7 +469,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Starting Nextcloud-Signal Docker Containers" >> $
 start_spinner 'Starting Nextcloud-Signal Docker Containers...'
 sleep 1
 
-cd /opt/nextcloud-spreed-signaling && /usr/local/bin/docker network create "spreed" && docker-compose up -d >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cd /opt/nextcloud-spreed-signaling && docker network create "spreed" && docker-compose up -d >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
