@@ -1,0 +1,5 @@
+# By default ALL IPs are denied administration access to softether by virtue of the existing adminip.txt file.
+# Add IPs like below to allow administration access to softether.
+#192.168.100.100 //this allows administration access to entire server from IP 192.168.100.100
+#192.168.100.100 HUB1 //this allows administration access to HUB1 from IP 192.168.100.100
+#More information on how to configure the adminip.txt file can be found at: https://www.softether.org/4-docs/1-manual/3._SoftEther_VPN_Server_Manual/3.3_VPN_Server_Administration#3.3.18_Restricting_by_IP_Address_of_Remote_Administration_Connection_Source_IPs
