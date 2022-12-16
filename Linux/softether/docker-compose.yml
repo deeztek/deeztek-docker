@@ -20,6 +20,7 @@ services:
 
     volumes:
       - ./softether_config/vpnserver/vpn_server.config:/usr/vpnserver/vpn_server.config
+      - ./softether_config/vpnserver/adminip.txt:/usr/vpnserver/adminip.txt
       - ./certs/$HOST.$DOMAIN/fullchain.crt:/opt/server.crt
       - ./certs/$HOST.$DOMAIN/privkey.key:/opt/server.key
 
