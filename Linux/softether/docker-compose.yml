@@ -9,7 +9,6 @@ services:
     image: siomiz/softethervpn
     container_name: softethervpn
     environment:
-      environment:
       - PUID=$PUID
       - PGID=$GUID
       - TZ=$TZ
@@ -63,7 +62,7 @@ services:
   
     restart: unless-stopped
 
-   certs:
+  certs:
       container_name: traefik-cert-dumper
       restart: always
       image: ldez/traefik-certs-dumper:latest
