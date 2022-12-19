@@ -25,5 +25,9 @@ As new certificates are issued by Let's Encrypt they SHOULD automatically show u
 
 **Server Management**
 
-By default ALL IPs are denied administration access to Softether by virtue of the existing adminips.txt file under the /opt/softether/softether_config/vpnserver directory. Add IPs you wish to be allowed to administer the server and/or Softether Hub in that file (each in its own line), install the Softether Server Manager tools on the a machine with an allowed IP and connect to the Softether server. More information on adminips.txt can be found at: https://www.softether.org/4-docs/1-manual/3._SoftEther_VPN_Server_Manual/3.3_VPN_Server_Administration#3.3.18_Restricting_by_IP_Address_of_Remote_Administration_Connection_Source_IPs
+By default ALL IPs are denied administration access to Softether by virtue of the existing adminip.txt file located under the /opt/softether/softether_config/vpnserver directory. Add IPs you wish to be allowed to administer the server and/or Softether Hub in that file (each in its own line), install the Softether Server Manager tools on the a machine with an allowed IP and connect to the Softether server. More [info](https://www.softether.org/4-docs/1-manual/3._SoftEther_VPN_Server_Manual/3.3_VPN_Server_Administration#3.3.18_Restricting_by_IP_Address_of_Remote_Administration_Connection_Source_IPs).
+
+**Multi-Factor Authentication (MFA)**
+
+If you wish to configure MFA with Softether, please take a look at our [Softether VPN Remote Access with Duo Multi-Factor Authentication (MFA) article](https://docs.deeztek.com/books/softether-vpn/page/softether-vpn-remote-access-with-duo-multi-factor-authentication-mfa).
 
