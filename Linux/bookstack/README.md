@@ -48,6 +48,25 @@ Navigate to the bookstack URL at **https://[HOST].[DOMAIN]** where **[HOST]** AN
 
 Change the default credentials immediately after login.
 
+***SMTP Configuration*** 
+
+Edit the .env file:
+
+`vi /opt/bookstack/config/www/.env`
+
+Set the parameters below to reflect your e-mail server (all settings must be present but left blank if encryption, authentication, etc. is not desired):
+
+```
+MAIL_DRIVER=smtp
+MAIL_HOST=mail.domain.tld
+MAIL_PORT=25
+MAIL_FROM=someone@domain.tld
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=
+```
+Save the file and restart the bookstack container.
+
 **Database Backups**
 
 Edit /opt/bookstack/db_backups/dbbackups.sh file:
