@@ -50,7 +50,7 @@ Change the default credentials immediately after login.
 
 ***SMTP Configuration*** 
 
-Edit the .env file:
+Edit the bookstack .env file:
 
 `vi /opt/bookstack/config/www/.env`
 
