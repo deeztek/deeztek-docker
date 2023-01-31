@@ -41,6 +41,13 @@ Bring up the bookstack container:
 
 `docker-compose up -d`
 
+Navigate to the bookstack URL at https://[HOST].[DOMAIN] where [HOST] AND [DOMAIN] are the host and domain values you set in the .env file above. Login with the the following default credentials:
+
+Username: admin@admin.com
+Password: password
+
+Change the default credentials immediately after login.
+
 **Database Backups**
 
 Edit /opt/bookstack/db_backups/dbbackups.sh file:
