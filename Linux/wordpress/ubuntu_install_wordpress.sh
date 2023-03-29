@@ -272,6 +272,17 @@ sleep 1
 
 stop_spinner $?
 
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/Wordpress-$SITE_NAME/ofelia_config/config.ini file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Creating ofelia_config/config.ini file...'
+sleep 1
+
+
+#create /opt/Wordpress-$SITE_NAME/ofelia_config/config.ini
+/bin/cp -r $SCRIPTPATH/ofelia_config/config.ini /opt/Wordpress-$SITE_NAME/ofelia_config/config.ini >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
 
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with Wordpress Domain(s)" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
@@ -428,6 +439,19 @@ sleep 1
 stop_spinner $?
 
 #=== CONFIGURE /opt/Wordpress-$SITE_NAME/docker-compose.yml ENDS HERE ===
+
+#=== CONFIGURE /opt/Wordpress-$SITE_NAME/ofelia_config/config.ini STARTS HERE ===
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/ofelia_config/config.ini file with Wordpress Site Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Configuring ofelia_config/config.ini file with Wordpress Site Name...'
+sleep 1
+
+/bin/sed -i -e "s,SITENAME,${SITE_NAME},g" "/opt/Wordpress-$SITE_NAME/ofelia_config/config.ini" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+#=== CONFIGURE /opt/Wordpress-$SITE_NAME/ofelia_config/config.ini ENDS HERE ===
 
 echo "[`date +%m/%d/%Y-%H:%M`] Starting Wordpress Docker Containers" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
