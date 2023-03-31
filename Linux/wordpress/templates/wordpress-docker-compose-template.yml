@@ -46,6 +46,7 @@ services:
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
       WORDPRESS_CONFIG_EXTRA: |
+        define('DISABLE_WP_CRON', true);
         define('WP_HOME', 'http://${WORDPRESS_DOMAIN}');
         define('WP_SITEURL', 'http://${WORDPRESS_DOMAIN}');
     volumes:
