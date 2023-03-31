@@ -49,6 +49,7 @@ services:
         define('DISABLE_WP_CRON', true);
         define('WP_HOME', 'http://${WORDPRESS_DOMAIN}');
         define('WP_SITEURL', 'http://${WORDPRESS_DOMAIN}');
+
     volumes:
       - wordpress:/var/www/html      
     networks:
