@@ -49,6 +49,8 @@ services:
         define('DISABLE_WP_CRON', true);
         define('WP_HOME', 'http://${WORDPRESS_DOMAIN}');
         define('WP_SITEURL', 'http://${WORDPRESS_DOMAIN}');
+        define('WP_REDIS_HOST', 'wordpress_redis_SITENAME');
+        define('WP_REDIS_PASSWORD', '${REDIS_PASSWORD}');
 
     volumes:
       - wordpress:/var/www/html      
@@ -81,10 +83,24 @@ services:
       #- "com.centurylinklabs.watchtower.enable=true"
 
 
+  wordpress_redis_SITENAME:
+    container_name: wordpress_redis_SITENAME
+    image: redis:6.0.6
+    restart: unless-stopped
+    entrypoint: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - TRAEFIKNETWORK
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - redis:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
 
-  wordpress_db_cron_SITENAME:
+
+  wordpress_cron_SITENAME:
     image: 'mcuadros/ofelia:latest'
-    container_name: wordpress_db_cron_SITENAME
+    container_name: wordpress_cron_SITENAME
     environment:
       - "TZ=$TZ"
     volumes:
@@ -119,6 +135,13 @@ volumes:
       type: none
       o: bind
       device: WORDPRESSDATAPATH/SITENAME/wordpress
+
+  redis:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: WORDPRESSDATAPATH/SITENAME/redis
 
 #Uncomment below to use db_backups volume
   #db_backups:

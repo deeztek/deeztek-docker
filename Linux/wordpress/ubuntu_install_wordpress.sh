@@ -242,6 +242,7 @@ sleep 1
 /bin/mkdir -p $WORDPRESS_DATA_PATH/$SITE_NAME/db_backups && \
 /bin/mkdir -p $WORDPRESS_DATA_PATH/$SITE_NAME/db_backups/$SITE_NAME && \
 /bin/mkdir -p $WORDPRESS_DATA_PATH/$SITE_NAME/wordpress && \
+/bin/mkdir -p $WORDPRESS_DATA_PATH/$SITE_NAME/redis && \
 /bin/chown -R $PUID:$GUID $WORDPRESS_DATA_PATH/$SITE_NAME 2>> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
 stop_spinner $?
@@ -345,6 +346,22 @@ echo "Random Wordpress MySQL/MariaDB Database Password is:${GREEN} $MYSQL_PASSWO
 
 
 
+echo "[`date +%m/%d/%Y-%H:%M`] Creating Random Redis Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Creating Random Redis Password...'
+sleep 1
+
+REDIS_PASSWORD=`/bin/cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-20} | head -n 1` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+
+echo "[`date +%m/%d/%Y-%H:%M`] Random Redis Password is: $REDIS_PASSWORD" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+echo "Random Redis Password is:${GREEN} $REDIS_PASSWORD ${RESET}" | boxes -d stone -p a2v1
+
+
+
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with MySQL/MariaDB root Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Configuring .env file with MySQL/MariaDB root Password..'
@@ -382,6 +399,15 @@ start_spinner 'Configuring .env file with MySQL/MariaDB Database Password...'
 sleep 1
 
 /bin/sed -i -e "s,MYSQLPASSWORD,${MYSQL_PASSWORD},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with Redis Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Configuring .env file with Redis Password...'
+sleep 1
+
+/bin/sed -i -e "s,REDISPASSWORD,${REDIS_PASSWORD},g" "/opt/Wordpress-$SITE_NAME/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 

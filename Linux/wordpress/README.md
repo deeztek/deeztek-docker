@@ -1,6 +1,20 @@
 **About**
 
-Wordpress with Traefik support.
+Wordpress with Ofelia for Cron, Redis Cache and Traefik Proxy support.
+
+**Prerequites**
+
+The script requires that you have a fully updated Ubuntu server (tested on Ubuntu 18.04 LTS, 20.04 LTS and 22.04 LTS) and functional Traefik Proxy. A Traefik Proxy can easily be deployed by utilizing our automated Traefik install script under deeztek-docker/Linux/traefik directory or by utilizing the start.sh script under deeztek-docker/Linux directory after you git clone this repository.
+
+**Required Information**
+
+The install script will prompt you for the following information before it starts installation. Ensure you have that information available before you begin:
+
+* A unique Wordpress site name you wish you use with no spaces or special characters (Example: mywordpresssite)
+* A Wordpress database name you wish you use with no spaces or special characters (Example: mywordpresssite_db)
+* The PRIMARY ROOT domain for your Wordpress site INCLUDING www. in front if applicable (Example: www.domain.tld OR host.domain.tld)
+* Any additional domain for your Wordpress site if applicable (Example: domain.tld)
+* An EXISTING data path WITHOUT an ending slash "/" for your Wordpress site, database and redis data (Example: /mnt/data)
 
 **Installation**
 
@@ -8,19 +22,31 @@ Wordpress with Traefik support.
 
 `https://github.com/deeztek/deeztek-docker.git`
 
-*  Adjust variables under **docker/Linux/wordpress/.env** file
+This will clone the repository and create a **deeztek-docker** directory in the directory you ran the git clone command from.
 
-Set permissions for the **db_data** directory to the **PUID** and **GUID** from the .env file above (Usually 1001:1001) or MySQL will not start:
+Change to the deeztek-docker/Linux/wordpress directory:
 
-`chown -R 1001:1001 db_data`
+`cd deeztek-docker/Linux/wordpress/`
 
-*  Start container
+Make script executable:
 
-`docker-compose up -d`
+`sudo chmod +x ubuntu_install_wordpress.sh`
+
+Run the script as root:
+
+`sudo ./ubuntu_install_wordpress.sh`
+
+The script will prompt you for the information outlined in the **Required Information** section, it will create a directory structure under /opt/Wordpress-SITENAME, create a data directory structure under the data path you provided, it will automatically generate random MySQL/MariaDB root password, MySQL/MariaDB Wordpress Database username, MySQL/MariaDB Wordpress Database password, Redis password, configure the appropriate configuration files as well as the docker-compose.yml file and start the docker stack. The randomly generated strings for MySQL/MariaDB and Redis will be stored in the .env file in the /opt/Wordpress-SITENAME directory as well as the install_log-xxxxxxxx.log that will be generated in the deeztek-docker/Linux/wordpress directory. 
+
+**If you require support for and you wish to post the install_log-xxxxxxxx.log file to assist with troubleshooting, ensure you anonymize the randomly generated strings in that file beforehand.**
+
+**Redis Cache**
+
+After your Wordpress site is up and running it's highly recommended you install and configure the [Redis Object Cache](https://wordpress.org/plugins/redis-cache/) plugin in order to take advantage of the Redis container that gets deployed with this stack. Redis will offer substantial performance improvement for your website.
 
 **Wordpress MySQL Database Backups**
 
-The docker-compose.yml file includes the **wordpress_db_cron**  container that is based on the **mcuadros/ofelia:latest** image which can be used to schedule database backups of the Wordpress MySQL database. The docker-compose.yml file also has configuration to optionally connect to a existing NFS or CIFS/SMB share using the db_backups docker volume. 
+The docker-compose.yml file includes the **wordpress_cron_SITENAME** container (where SITENAME is the site name you entered when prompted by the install script) that is based on the **mcuadros/ofelia:latest** image which by default runs every 5 minutes for various Wordpress related scheduled jobs. Additionally, it can be used to schedule database backups of the Wordpress MySQL database. The docker-compose.yml file also has configuration to optionally connect to a existing NFS or CIFS/SMB share using the db_backups docker volume. 
 
 Stop the wordpress_db container:
 

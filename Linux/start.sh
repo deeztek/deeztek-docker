@@ -65,6 +65,12 @@ do
             cd -
             break
             ;;            
+
+    "Install Wordpress")
+            cd wordpress/ && bash ubuntu_install_wordpress.sh
+            cd -
+            break
+            ;;            
         
         "Exit")
             echo "Exiting...."
