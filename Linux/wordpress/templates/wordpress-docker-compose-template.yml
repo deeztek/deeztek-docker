@@ -101,6 +101,9 @@ services:
   wordpress_cron_SITENAME:
     image: 'mcuadros/ofelia:latest'
     container_name: wordpress_cron_SITENAME
+    logging:
+      options:
+        max-size: 10m  
     environment:
       - "TZ=$TZ"
     volumes:
