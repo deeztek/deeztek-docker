@@ -284,6 +284,14 @@ sleep 1
 
 stop_spinner $?
 
+start_spinner 'Creating wordpress.ini file...'
+sleep 1
+
+
+#create /opt/Wordpress-$SITE_NAME/wordpress.ini
+/bin/cp -r $SCRIPTPATH/templates/wordpress.ini /opt/Wordpress-$SITE_NAME/wordpress.ini >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
 
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/Wordpress-$SITE_NAME/.env file with Wordpress Domain(s)" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1

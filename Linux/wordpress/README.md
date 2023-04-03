@@ -44,6 +44,9 @@ The script will prompt you for the information outlined in the **Required Inform
 
 After your Wordpress site is up and running it's highly recommended you install and configure the [Redis Object Cache](https://wordpress.org/plugins/redis-cache/) plugin in order to take advantage of the Redis container that gets deployed with this stack. Redis will offer substantial performance improvement for your website.
 
+**Wordpress Custom PHP Options**
+The script will create a /opt/Wordpress-SITENAME/wordpress.ini file which contains various PHP options such as file_uploads, memory_limit, upload_max_filesize, post_max_size, max_execution_time and max_input_time. By default the **upload_max_filesize** and the **post_max_size** which control the Wordpress upload file size have been set to 256M. Adjust as necessary to your needs. After making changes to that file, you must restart the Wordpress stack with **docker-compose down && docker-compose up -d**.
+
 **Wordpress MySQL Database Backups**
 
 The docker-compose.yml file includes the **wordpress_cron_SITENAME** container (where SITENAME is the site name you entered when prompted by the install script) that is based on the **mcuadros/ofelia:latest** image which by default runs every 5 minutes for various Wordpress related scheduled jobs. Additionally, it can be used to schedule database backups of the Wordpress MySQL database. The docker-compose.yml file also has configuration to optionally connect to a existing NFS or CIFS/SMB share using the db_backups docker volume. 
