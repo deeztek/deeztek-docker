@@ -88,7 +88,7 @@ services:
       POSTGRES_PASSWORD:
         
       #Duo 2FA (Ensure you first set Duo 2FA parameters as outlined in /guacamole_home/guacamole.properties file and then uncomment below to enable)
-#      GUACAMOLE_HOME: /guacamole_home
+      GUACAMOLE_HOME: /guacamole_home
         
       #LDAP Authentication
       LDAP_HOSTNAME: $LDAP_HOST

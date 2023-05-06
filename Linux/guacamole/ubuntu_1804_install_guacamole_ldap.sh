@@ -287,7 +287,7 @@ echo "Creating /opt/guacamole/.env file"
 echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/guacamole/.env file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
 #create /opt/guacamole/.env
-/bin/cp $SCRIPTPATH/templates/.env-template /opt/guacamole/.env
+/bin/cp $SCRIPTPATH/templates/.env-template-ldap /opt/guacamole/.env
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
@@ -459,6 +459,21 @@ do
  
             echo "NOT installing Duo MFA Support"
              echo "[`date +%m/%d/%Y-%H:%M`] NOT installing Duo MFA Support" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+            echo "Creating guacamole.properties file"
+            echo "[`date +%m/%d/%Y-%H:%M`] Creating guacamole.properties file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+            /bin/cp $SCRIPTPATH/templates/guacamole.properties-template /opt/guacamole/guacamole_home/guacamole.properties
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Creating guacamole.properties file ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Creating guacamole.properties file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+
             echo "Starting Guacamole Docker Container"
             echo "[`date +%m/%d/%Y-%H:%M`] Starting Guacamole Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 

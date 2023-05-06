@@ -1,9 +1,3 @@
 #Guacd Configuration Below
 guacd-hostname: guacd
 guacd-port: 4822
-
-#Duo Configuration Below
-duo-api-hostname: DUOAPIHOSTNAME
-duo-integration-key: DUOINTEGRATIONKEY
-duo-secret-key: DUOSECRETKEY
-duo-application-key: DUOAPPLICATIONKEY

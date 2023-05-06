@@ -41,6 +41,8 @@ then
       echo "${RED}DUO Secret Key cannot be empty. Continuing installation but you must manually correct error and restart Guacamole ${RESET}"
 fi
 
+read -p "Browse to ${GREEN}https://guacamole.apache.org/releases/${RESET} to get the latest Apache Guacamole version and then enter that version number in order to continue (Example 1.5.1):"  GUACAMOLEVERSION
+
 
 #CREATE 64 CHARACTER ALPHANUMERIC DUO APPLICATION KEY
 DUO_APPLICATION_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
@@ -48,7 +50,7 @@ DUO_APPLICATION_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head 
 echo "Creating guacamole_home/guacamole.properties file"
 echo "[`date +%m/%d/%Y-%H:%M`] Creating guacamole_home/guacamole.properties file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-/bin/cp $SCRIPTPATH/templates/guacamole.properties-template /opt/guacamole/guacamole_home/guacamole.properties
+/bin/cp $SCRIPTPATH/templates/guacamole.properties-template-duo /opt/guacamole/guacamole_home/guacamole.properties
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
@@ -117,6 +119,19 @@ else
         echo "${RED}Error Enabling DUO MFA in Guacamole docker-compose.yml. Continuing installation but you must manually correct error and restart Guacamole ${RESET}"
         echo "[`date +%m/%d/%Y-%H:%M`] Error Enabling DUO MFA in Guacamole docker-compose.yml. Continuing installation but you must manually correct error and restart Guacamole" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 fi
+
+echo "Downloading and installing guamole-auth-duo-$GUACAMOLEVERSION.jar extension"
+echo "[`date +%m/%d/%Y-%H:%M`] Downloading guamole-auth-duo-$GUACAMOLEVERSION.jar extension" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+wget -O $SCRIPTPATH/guacamole-auth-duo-$GUACAMOLEVERSION.tar.gz https://apache.org/dyn/closer.lua/guacamole/$GUACAMOLEVERSION/binary/guacamole-auth-duo-$GUACAMOLEVERSION.tar.gz?action=download && tar -xvzf $SCRIPTPATH/guacamole-auth-duo-$GUACAMOLEVERSION.tar.gz && cp $SCRIPTPATH/guacamole-auth-duo-$GUACAMOLEVERSION/guacamole-auth-duo-$GUACAMOLEVERSION.jar /opt/guacamole/guacamole_home/extensions/
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Downloading and installing guamole-auth-duo-$GUACAMOLEVERSION.jar extension. Continuing installation but you must manually correct error and restart Guacamole ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`]Error Downloading and installing guamole-auth-duo-$GUACAMOLEVERSION.jar extension. Continuing installation but you must manually correct error and restart Guacamole" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+fi
+
 
 echo "Starting Guacamole Docker Container"
 echo "[`date +%m/%d/%Y-%H:%M`] Starting Guacamole Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
