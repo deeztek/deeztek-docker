@@ -21,6 +21,7 @@ services:
       
     ports: 
       - 9000:9000  
+      - 9443:9443
     restart: always
 
   portainer_agent:

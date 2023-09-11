@@ -18,7 +18,7 @@ services:
     networks:
       - guacamole
 
-   guacdb:
+  guacdb:
     image: mysql:latest
     container_name: guacdb
     logging:
@@ -27,8 +27,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./dbinit:/docker-entrypoint-initdb.d
-      - ./dbdata:/var/lib/mysql
-    restart: unless-stopped
+      - ./dbdata:/var/lib/mysql 
     environment:
       PUID: ${PUID}
       GUID: ${GUID}

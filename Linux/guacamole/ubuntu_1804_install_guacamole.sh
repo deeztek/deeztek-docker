@@ -328,19 +328,23 @@ fi
 
 while true
 do
-PS3='Do you wish to enable Duo MFA Support: '
-options=("Yes" "No")
+PS3='Do you wish to enable MFA Support: '
+options=("Install DUO MFA" "Install TOTP MFA" "None")
 select opt in "${options[@]}"
 do
     case $opt in
-        "Yes")
+        "Install DUO MFA")
             /bin/bash $SCRIPTPATH/ubuntu_1804_enable_duo_guacamole.sh
             exit
             ;;
-        "No")
+        "Install TOTP MFA")
+            /bin/bash $SCRIPTPATH/ubuntu_1804_enable_totp_guacamole.sh
+            exit
+            ;;
+        "None")
  
-            echo "NOT installing Duo MFA Support"
-            echo "[`date +%m/%d/%Y-%H:%M`] NOT installing Duo MFA Support" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+            echo "NOT installing MFA Support"
+            echo "[`date +%m/%d/%Y-%H:%M`] NOT installing MFA Support" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
             echo "Creating guacamole.properties file"
             echo "[`date +%m/%d/%Y-%H:%M`] Creating guacamole.properties file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
