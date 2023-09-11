@@ -95,19 +95,28 @@ do
 done
 
 
-read -p "Enter the Guacamole Postgres SQL username you wish to use:"  POSTGRES_USERNAME
+read -p "Enter the MySQL root password you wish to use:"  MYSQL_ROOT
 
-if [ -z "$POSTGRES_USERNAME" ]
+if [ -z "$MYSQL_ROOT" ]
 then
-      echo "${RED}Postgres SQL username cannot be empty ${RESET}"
+      echo "${RED}MySQL root password cannot be empty ${RESET}"
       exit
 fi
 
-read -p "Enter the Guacamole Postgres SQL password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your password):"  POSTGRES_PASSWORD
+read -p "Enter the MySQL username you wish to use:"  MYSQL_USER
 
-if [ -z "$POSTGRES_PASSWORD" ]
+if [ -z "$MYSQL_USER" ]
 then
-      echo "${RED}Postgres SQL password cannot be empty ${RESET}"
+      echo "${RED}MySQL username cannot be empty ${RESET}"
+      exit
+fi
+
+read -p "Enter the MySQL password you wish to use (Ensure you do NOT use $ , single or double quote special characters to form your password):"  MYSQL_PASSWORD
+
+if [ -z "$MYSQL_PASSWORD" ]
+then
+
+      echo "${RED}MySQL password cannot be empty ${RESET}"
       exit
 fi
 
@@ -127,6 +136,7 @@ read -p "Enter the Guacamole subdomain you wish to use (Example: domain.tld):"  
 
 if [ -z "$ACME_DOMAIN" ]
 then
+   
       echo "${RED}Guacamole subdomain cannot be empty ${RESET}"
       exit
 fi
@@ -233,7 +243,7 @@ echo "Creating /opt/guacamole/dbinit/initdb.sql"
 echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/guacamole/dbinit/initdb.sql" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
 /bin/mkdir -p /opt/guacamole/dbinit
-/usr/bin/docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --postgres > /opt/guacamole/dbinit/initdb.sql
+/usr/bin/docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --mysql > /opt/guacamole/dbinit/initdb.sql
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
@@ -299,36 +309,49 @@ fi
 
 
 
-echo "Configuring /opt/guacamole/.env file with Guacamole PostgreSQL Username"
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/.env file with Guacamole PostgreSQL Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "Configuring /opt/guacamole/.env file with Guacamole MySQL root password"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/.env file with Guacamole MySQL root password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-/bin/sed -i -e "s/POSTGRESUSER/${POSTGRES_USERNAME}/g" "/opt/guacamole/.env"
+/bin/sed -i -e "s,MYSQLROOT,${MYSQL_ROOT},g" "/opt/guacamole/.env"
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
 else
-        echo "${RED}Error Configuring /opt/guacamole/.env file with Guacamole PostgreSQL Username ${RESET}"
-        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/guacamole/.env file with Guacamole PostgreSQL Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        echo "${RED}Error Configuring /opt/guacamole/.env file with Guacamole MySQL root password ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/guacamole/.env file with Guacamole MySQL root password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
         exit
 fi
 
-echo "Configuring /opt/guacamole/.env file with Guacamole PostgreSQL Password"
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/.env file with Guacamole PostgreSQL Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "Configuring /opt/guacamole/.env file with Guacamole MySQL Username"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/.env file with Guacamole MySQL Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-/bin/sed -i -e "s/POSTGRESPASSWORD/${POSTGRES_PASSWORD}/g" "/opt/guacamole/.env"
+/bin/sed -i -e "s,MYSQLUSER,${MYSQL_USER},g" "/opt/guacamole/.env"
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
 else
-        echo "${RED}Error Configuring /opt/guacamole/.env file with Guacamole PostgreSQL Password ${RESET}"
-        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/guacamole/.env file with Guacamole PostgreSQL Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        echo "${RED}Error Configuring /opt/guacamole/.env file with Guacamole MySQL Username ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/guacamole/.env file with Guacamole MySQL Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
+echo "Configuring /opt/guacamole/.env file with Guacamole MySQL Password"
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/.env file with Guacamole MySQL Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+/bin/sed -i -e "s,MYSQLPASSWORD,${MYSQL_PASSWORD},g" "/opt/guacamole/.env"
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Configuring /opt/guacamole/.env file with Guacamole MySQL Password ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Configuring /opt/guacamole/.env file with Guacamole MySQL Password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
         exit
 fi
 
 echo "Configuring /opt/guacamole/.env file with Guacamole Host Name"
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/guacamole/.env file with Guacamole Host Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-/bin/sed -i -e "s/ACMEHOSTNAME/${ACME_HOSTNAME}/g" "/opt/guacamole/.env"
+/bin/sed -i -e "s,ACMEHOSTNAME,${ACME_HOSTNAME},g" "/opt/guacamole/.env"
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
@@ -477,7 +500,10 @@ fi
             echo "Starting Guacamole Docker Container"
             echo "[`date +%m/%d/%Y-%H:%M`] Starting Guacamole Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-            cd /opt/guacamole && /usr/local/bin/docker-compose up -d && /usr/local/bin/docker-compose down && /bin/cp $SCRIPTPATH/dbfix/pg_hba.conf /opt/guacamole/dbdata/ && /usr/local/bin/docker-compose up -d
+            cd /opt/guacamole && /usr/local/bin/docker-compose up -d
+
+            # *** HACKY FIX FOR POSTGRESQL BELOW NO LONGER USED SINCE WE ARE USING MYSQL. LEFT FOR REFERENCE ***
+            #cd /opt/guacamole && /usr/local/bin/docker-compose up -d && /usr/local/bin/docker-compose down && /bin/cp $SCRIPTPATH/dbfix/pg_hba.conf /opt/guacamole/dbdata/ && /usr/local/bin/docker-compose up -d
 
 
             if [ $? -eq 0 ]; then

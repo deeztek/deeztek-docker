@@ -13,39 +13,55 @@ services:
   init-guacamole-db:
     image: guacamole/guacamole:latest
     container_name: guacamole_initdb
-    command: ["/bin/sh", "-c", "test -e /init/initdb.sql && echo 'init file already exists' || /opt/guacamole/bin/initdb.sh --postgres > /init/initdb.sql" ]
+    command: ["/bin/sh", "-c", "test -e /init/initdb.sql && echo 'init file already exists' || /opt/guacamole/bin/initdb.sh --mysql > /init/initdb.sql" ]
     volumes:
       - ./dbinit:/init
     networks:
       - guacamole
 
-  postgres:
-    image: postgres:latest
-    container_name: guacamole_postgres
+  guacdb:
+    image: mysql:latest
+    container_name: guacdb
+    logging:
+      options:
+        max-size: 10m
     restart: unless-stopped
     volumes:
       - ./dbinit:/docker-entrypoint-initdb.d
-      - ./dbdata:/var/lib/postgresql/data
-
+      - ./dbdata:/var/lib/mysql
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-guacdb}   #Set postgres username in included .env file
-      POSTGRES_PASSWORD:   #Set postgres password in included .env file
+      PUID: ${PUID}
+      GUID: ${GUID}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       - init-guacamole-db
     networks:
       - guacamole
 
+
   guacd:
     image: guacamole/guacd:latest
     container_name: guacamole_guacd
+    logging:
+      options:
+        max-size: 10m
     restart: unless-stopped
     networks:
       - TRAEFIKNETWORK
       - guacamole
+    environment:
+      PUID: ${PUID}
+      GUID: ${GUID}
 
   guac:
     image: guacamole/guacamole:latest
     container_name: guacamole
+    logging:
+      options:
+        max-size: 10m
     restart: unless-stopped
     volumes:
       - ./guacamole_home:/guacamole_home
@@ -82,11 +98,12 @@ services:
   
     environment:
       GUACD_HOSTNAME: guacd
-      POSTGRES_HOSTNAME: postgres
-      POSTGRES_DATABASE: ${POSTGRES_USER:-guacdb}    #Set postgres username in included .env file
-      POSTGRES_USER: ${POSTGRES_USER:-guacdb}    #Set postgres password in included .env file
-      POSTGRES_PASSWORD:
-        
+      MYSQL_HOSTNAME: guacdb
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      PUID: ${PUID}
+      GUID: ${GUID}
       #Duo 2FA (Ensure you first set Duo 2FA parameters as outlined in /guacamole_home/guacamole.properties file and then uncomment below to enable)
       GUACAMOLE_HOME: /guacamole_home
         
@@ -99,7 +116,7 @@ services:
       LDAP_USER_BASE_DN: $LDAP_USER_DN
       LDAP_USERNAME_ATTRIBUTE: sAMAccountName
     depends_on:
-      - postgres
+      - guacdb
       - guacd
   
 volumes:
