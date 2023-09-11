@@ -13,7 +13,7 @@ More information on Apache Guacamole can be found at the URL below:
 
 **General Requirements**
 
-Apache Guacamole requires that you have a fully updated Ubuntu 18.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik](https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
+Apache Guacamole requires that you have a fully updated Ubuntu 20.04 or 22.04 machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik](https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
 
 **Guacamole with Local User Authentication Requirements**
 
@@ -41,7 +41,7 @@ During installation, you will be asked to provide the LDAP Users that will be lo
 
 **Installation**
 
-Guacamole can be easily installed in your existing Ubuntu 18.04 based Docker host by utilizing either the **ubuntu_1804_install_guacamole.sh** script for use with local user authentication or by utilizing the **ubuntu_1804_install_guacamole_ldap.sh** script for LDAP user authentication.
+Guacamole can be easily installed in your existing Ubuntu 20.04 or 22.04 based Docker host by utilizing either the **ubuntu_1804_install_guacamole.sh** script for use with local user authentication or by utilizing the **ubuntu_1804_install_guacamole_ldap.sh** script for LDAP user authentication.
 
 **Quick script install and run instructions**
 
@@ -89,7 +89,7 @@ API hostname
 
 **Duo MFA Automated Configuration**
 
-During Guacamole installation by either the **ubuntu_1804_install_guacamole.sh** or the **ubuntu_1804_install_guacamole_ldap.sh** scripts, you will be prompted to enable Duo MFA support. If you answer yes, you will be prompted for **Intergration Key**, **Secret Key** and the **API Hostname** that you obtained from the Duo website (See **Duo MFA Requirements** section above) and the script will automatically configure Duo MFA support for your Guacamole container.
+During Guacamole installation by either the **ubuntu_1804_install_guacamole.sh** or the **ubuntu_1804_install_guacamole_ldap.sh** scripts, you will be prompted to enable Duo MFA support. If you choose to enable Duo MFA support, you will be prompted to browse to the Guacamole website at **https://guacamole.apache.org/releases/** to obtain the latest Guacamole version number and enter it in the installation script prompt. The installation script will use that version number to download and install the correct **guacamole-auth-duo-x.x.x.jar** extension for your guacamole installation. Additionally, the installation script will prompt for the **Intergration Key**, **Secret Key** and the **API Hostname** that can be obtained from the Duo dashboard (See **Duo MFA Requirements** section above) and the script will automatically generate a random Duo application key and configure Duo MFA support for your Guacamole installation.
 
 **Duo MFA Manual Configuration**
 
@@ -115,7 +115,28 @@ duo-application-key: duo_application_key_from_above
 #Uncomment below if you wish to be able to skip Duo 2FA if it's unavailable
 #skip-if-unavailable: duo 
 ```
-* Save and restart Guacamole container. 
+
+* Save the file
+
+* Browse to **https://guacamole.apache.org/releases/** and download the correct **guacamole-auth-duo-x.x.x.tar.gz** extension corresponding to your Guacamole version number, untar it and copy the resultant **guacamole-auth-duo-x.x.x.jar** file to the /opt/guacamole/guacamole_home/extensions directory.
+
+* Restart Guacamole container:
+
+```cd /opt/guacamole && docker-compose down && docker-compose up -d```
+
+**TOTP MFA Automated Configuration**
+
+During Guacamole installation by either the **ubuntu_1804_install_guacamole.sh** or the **ubuntu_1804_install_guacamole_ldap.sh** scripts, you will be prompted to enable TOTP MFA support. If you choose to enable TOTP MFA support, you will be prompted to browse to the Guacamole website at **https://guacamole.apache.org/releases/** to obtain the latest Guacamole version number and enter it in the installation script prompt. The installation script will use that version number to download and install the correct **guacamole-auth-totp-x.x.x.jar** extension for your guacamole installation.
+
+**TOTP MFA Manual Configuration**
+
+If you wish to manually configure TOTP MFA support, follow the instructions below:
+
+* Browse to **https://guacamole.apache.org/releases/** and download the correct **guacamole-auth-totp-x.x.x.tar.gz** extension corresponding to your Guacamole version number, untar it and copy the resultant **guacamole-auth-torp-x.x.x.jar** file to the /opt/guacamole/guacamole_home/extensions directory.
+
+* Restart Guacamole container:
+
+```cd /opt/guacamole && docker-compose down && docker-compose up -d```
 
 
 
