@@ -36,6 +36,9 @@ DOCKERCOMPOSEURL=`curl $1 -s -L -I -o /dev/null -w '%{url_effective}' https://gi
 #Grep latest Docker Compose version from $THEURL
 DOCKERCOMPOSEVERSION=`echo "$DOCKERCOMPOSEURL" | sed 's:.*/::'`
 
+#Get Ubuntu Release Code Name in order to add correct Docker Repository
+UBUNTUCODENAME=`. /etc/os-release; echo ${UBUNTU_CODENAME/*, /}`
+
 echo "Starting Docker Compose $DOCKERCOMPOSEVERSION Installation" | boxes -d stone -p a2v1
 
 echo "[`date +%m/%d/%Y-%H:%M`] Installing prerequisites" 
@@ -69,7 +72,7 @@ fi
 echo "[`date +%m/%d/%Y-%H:%M`] Adding Docker repository to APT Sources"
 
 #Add Docker repository to APT sources
-/usr/bin/add-apt-repository -y  "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+/usr/bin/add-apt-repository -y  "deb [arch=amd64] https://download.docker.com/linux/ubuntu $UBUNTUCODENAME stable"
 
 ERR=$?
 if [ $ERR != 0 ]; then
