@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#This script will install Docker and Docker Compose on your Ubuntu 18.04 machine. Ensure your Ubuntu installation has all the latest updates.
+#This script will install Docker and Docker Compose on your Ubuntu machine. Ensure your Ubuntu installation has all the latest updates.
 
 #With your favorite browser, visit https://github.com/docker/compose/releases/latest and get the version number of the latest Docker Componse release (Example 1.25.1). 
 
@@ -19,13 +19,22 @@ apt install -y boxes
 
 #Get Inputs
 read -p "Enter the username of the user you would like to run Docker commands without having to prefix with sudo:"  THEUSER
-read -p "Browse to https://github.com/docker/compose/releases/latest to get the latest Docker version and then enter that Docker version in order to install. Ensure you include the 'v' in the version number (Example v2.1.0):"  DOCKERCOMPOSEVERSION
+
+#Prompt no longer needed. We get latest version automatically below with curl and sed
+#read -p "Browse to https://github.com/docker/compose/releases/latest to get the latest Docker version and then enter that Docker version in order to install. Ensure you include the 'v' in the version number (Example v2.1.0):"  DOCKERCOMPOSEVERSION
 
 #Ensure Script is run as root and if not exit
 if [ `id -u` -ne 0 ]; then
       echo "This script must be executed as root, Exiting..."
       exit 1
    fi
+
+
+#Get latest Docker Compose URL
+DOCKERCOMPOSEURL=`curl $1 -s -L -I -o /dev/null -w '%{url_effective}' https://github.com/docker/compose/releases/latest`
+
+#Grep latest Docker Compose version from $THEURL
+DOCKERCOMPOSEVERSION=`echo "$DOCKERCOMPOSEURL" | sed 's:.*/::'`
 
 echo "Starting Docker Compose $DOCKERCOMPOSEVERSION Installation" | boxes -d stone -p a2v1
 
@@ -173,10 +182,5 @@ else
 echo "[`date +%m/%d/%Y-%H:%M`] SUCCESS. Completed printing out Docker Compose Version"
 echo "The version output above should be docker-compose version $DOCKERCOMPOSEVERSION. If not, installation has failed"
 fi
-
-
-
-
-
 
 
