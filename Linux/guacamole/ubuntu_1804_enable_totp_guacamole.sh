@@ -24,7 +24,7 @@ read -p "Browse to ${GREEN}https://guacamole.apache.org/releases/${RESET} to get
 echo "Downloading and installing guamole-auth-totp-$GUACAMOLEVERSION.jar extension"
 echo "[`date +%m/%d/%Y-%H:%M`] Downloading guamole-auth-totp-$GUACAMOLEVERSION.jar extension" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-wget -O $SCRIPTPATH/guacamole-auth-totp-$GUACAMOLEVERSION.tar.gz https://apache.org/dyn/closer.lua/guacamole/$GUACAMOLEVERSION/binary/guacamole-auth-totp-$GUACAMOLEVERSION.tar.gz?action=download && tar -xvzf $SCRIPTPATH/guacamole-auth-totp-$GUACAMOLEVERSION.tar.gz && cp $SCRIPTPATH/guacamole-auth-totp-$GUACAMOLEVERSION/guacamole-auth-totp-$GUACAMOLEVERSION.jar /opt/guacamole/guacamole_home/extensions/
+wget -O $SCRIPTPATH/guacamole-auth-totp-$GUACAMOLEVERSION.tar.gz https://apache.org/dyn/closer.lua/guacamole/$GUACAMOLEVERSION/binary/guacamole-auth-totp-$GUACAMOLEVERSION.tar.gz?action=download && tar -xvzf $SCRIPTPATH/guacamole-auth-totp-$GUACAMOLEVERSION.tar.gz && cp $SCRIPTPATH/guacamole-auth-totp-$GUACAMOLEVERSION/guacamole-auth-totp-$GUACAMOLEVERSION.jar /opt/guacamole/guacamole_home/extensions/ && rm -rf /opt/guacamole/guacamole_home/extensions/.gitkeep
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
