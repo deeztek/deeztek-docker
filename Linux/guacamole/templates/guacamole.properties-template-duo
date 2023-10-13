@@ -2,6 +2,13 @@
 guacd-hostname: guacd
 guacd-port: 4822
 
+#Shared Drive Configuration Below
+#Setting below sets max file size to 1 GB
+api-max-request-size= 1048576000
+enable-drive: true
+drive-name: shared-drive
+drive-path: /shared-drive
+
 ### Duo MFA Config
 ## Register for a Free Duo account at: https://duo.com/
 ## Create a new “Auth API” application: Dashboard > Applications > Protect an Application > Web SDK

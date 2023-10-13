@@ -1,3 +1,10 @@
 #Guacd Configuration Below
 guacd-hostname: guacd
 guacd-port: 4822
+
+#Shared Drive Configuration Below
+#Setting below sets max file size to 1 GB
+api-max-request-size= 1048576000
+enable-drive: true
+drive-name: shared-drive
+drive-path: /shared-drive

@@ -500,6 +500,19 @@ else
         exit
 fi
 
+echo "Setting Shared Drive Permissions"
+echo "[`date +%m/%d/%Y-%H:%M`] Setting Shared Drive Permissions" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+chown -R 1001:1001 /opt/guacamole/shared-drive && rm -rf /opt/guacamole/shared-drive/.gitkeep
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Setting Shared Drive Permissions ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Setting Shared Drive Permissions" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+        exit
+fi
+
             echo "Starting Guacamole Docker Container"
             echo "[`date +%m/%d/%Y-%H:%M`] Starting Guacamole Docker Container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 

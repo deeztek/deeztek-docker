@@ -49,6 +49,8 @@ services:
       options:
         max-size: 10m
     restart: unless-stopped
+    volumes:
+      - ./shared-drive:/shared-drive:rw
     networks:
       - TRAEFIKNETWORK
       - guacamole

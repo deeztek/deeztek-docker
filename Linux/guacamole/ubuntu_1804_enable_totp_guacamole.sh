@@ -18,6 +18,19 @@ SCRIPTPATH=$(pwd)
 echo "Starting TOTP Configuration" | boxes -d stone -p a2v1
 echo "[`date +%m/%d/%Y-%H:%M`] Starting TOTP Configuration" >> $SCRIPTPATH/install_log-$TIMESTAMP.log  | boxes -d stone -p a2v1
 
+echo "Creating guacamole_home/guacamole.properties file"
+echo "[`date +%m/%d/%Y-%H:%M`] Creating guacamole_home/guacamole.properties file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+/bin/cp $SCRIPTPATH/templates/guacamole.properties-template-duo /opt/guacamole/guacamole_home/guacamole.properties
+
+if [ $? -eq 0 ]; then
+    echo "${GREEN}Done ${RESET}"
+else
+        echo "${RED}Error Creating guacamole_home/guacamole.properties file. Continuing installation but you must manually correct error and restart Guacamole ${RESET}"
+        echo "[`date +%m/%d/%Y-%H:%M`] Error Creating guacamole_home/guacamole.properties file. Continuing installation but you must manually correct error and restart Guacamole" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+       
+fi
+
 
 read -p "Browse to ${GREEN}https://guacamole.apache.org/releases/${RESET} to get the latest Apache Guacamole version and then enter that version number in order to continue (Example 1.5.1):"  GUACAMOLEVERSION
 
