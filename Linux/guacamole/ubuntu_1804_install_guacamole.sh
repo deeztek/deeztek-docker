@@ -362,7 +362,7 @@ fi
 echo "Setting Shared Drive Permissions"
 echo "[`date +%m/%d/%Y-%H:%M`] Setting Shared Drive Permissions" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-chown -R 1001:1001 /opt/guacamole/shared-drive && rm -rf /opt/guacamole/shared-drive/.gitkeep
+chown -R 1001:1001 /opt/guacamole/shared-drive && chmod -R 777 /opt/guacamole/shared-drive && rm -rf /opt/guacamole/shared-drive/.gitkeep
 
 if [ $? -eq 0 ]; then
     echo "${GREEN}Done ${RESET}"
