@@ -8,3 +8,6 @@ api-max-request-size= 1048576000
 enable-drive: true
 drive-name: shared-drive
 drive-path: /shared-drive
+
+#Auto Create Database Users after After Authentication (LDAP, TOTP, Duo)
+mysql-auto-create-accounts: true

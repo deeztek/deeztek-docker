@@ -9,6 +9,9 @@ enable-drive: true
 drive-name: shared-drive
 drive-path: /shared-drive
 
+#Auto Create Database Users after After Authentication (LDAP, TOTP, Duo)
+mysql-auto-create-accounts: true
+
 ### Duo MFA Config
 ## Register for a Free Duo account at: https://duo.com/
 ## Create a new “Auth API” application: Dashboard > Applications > Protect an Application > Web SDK
