@@ -1,0 +1,69 @@
+# Make sure that you have the same path created
+# if not use mkdir -p /volume1/docker/Zabbix/
+# Generate PSK FILE:
+# "openssl rand -hex 32 >> /volume1/docker/Zabbix/zabbix_agentd.psk"
+# change "XXX-IDENTITY" to the Proxy Name
+# change "xxx.xxx.xxx" to the IP Adress or the DNS name of you Zabbix Server
+
+version: "3"
+
+services:
+
+  zabbix-mariadb-server:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: zabbix-mariadb-server
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+    environment:
+      - PUID=$PUID
+      - PGID=$GUID
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=$TZ
+      - MYSQL_DATABASE=${MYSQL_DATABASE} #optional
+      - MYSQL_USER=${MYSQL_USER} #optional
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD} #optional
+      #- REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
+    volumes:
+      - db-data:/config
+      - db-backups:/db_backups
+    ports:
+      - 3306:3306
+    networks:
+     TRAEFIKNETWORK:
+      aliases:
+       - zabbix-mariadb-server
+    restart: unless-stopped
+
+
+  zabbix-proxy:
+    container_name: zabbix-proxy
+    image: zabbix/zabbix-proxy-mysql:ubuntu-${ZBXVER}-latest
+      logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+    restart: unless-stopped
+    depends_on:
+      - zabbix-mariadb-server
+    environment:
+      DB_SERVER_HOST: zabbix-mariadb-server
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      ZBX_TLSCONNECT: psk
+      ZBX_TLSACCEPT: psk
+      ZBX_TLSPSKIDENTITY: ${ZBX_TLSPSKIDENTITY}
+      ZBX_HOSTNAME: ${ZBX_HOSTNAME}
+      ZBX_SERVER_HOST: ${ZBX_SERVER_HOST}
+      ZBX_TLSPSKFILE: zabbix_agentd.psk
+      ZBX_SERVER_PORT: 10051
+    volumes:
+      - ./psk/zabbix_agentd.psk:/var/lib/zabbix/enc/zabbix_agentd.psk
+    networks:
+     TRAEFIKNETWORK:
+      aliases:
+       - zabbix-proxy
+

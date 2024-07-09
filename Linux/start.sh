@@ -42,7 +42,7 @@ do
             break
             ;;
 
-        "Install Zabbix")
+        "Install Zabbix Server")
             cd zabbix/ && bash ubuntu_install_zabbix.sh
             cd -
             break

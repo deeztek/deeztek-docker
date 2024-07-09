@@ -13,12 +13,13 @@ if [ `id -u` -ne 0 ]; then
       exit 1
    fi
 
-#Ensure Ubuntu 20.04 and if not exit
-if ! [[ "20.04" == *"$(lsb_release -rs)"* ]];
+#Ensure it's not Ubuntu 18.04
+if  [ "18.04" == *"$(lsb_release -rs)"* ];
 then
     echo "Ubuntu $(lsb_release -rs) is not currently supported.";
     exit;
 fi
+
 
 #Check if /usr/bin/docker exists and if not exit
 if [ ! -f "/usr/bin/docker" ]; then
@@ -42,6 +43,16 @@ if [[ $DOCKERCOMPOSEVER == *"1."* ]]; then
   exit 1
 
 fi
+
+#Check if traefik container exists
+if /usr/bin/docker container ls --format 'table {{.Names}}\t{{.Networks}}' | grep -q 'traefik'; then
+  echo "${GREEN}Traefik Container Exists. Proceeding... ${RESET}"
+
+else
+echo "${RED}Traefik Container does NOT Exist. Ensure Traefik is up and running and re-run this script. Exiting for now... ${RESET}"
+exit 1
+fi
+
 
 
 echo "Installing Boxes Prerequisite"
@@ -142,6 +153,16 @@ fi
 
 export MYSQL_PASSWORD
 
+read -p "Enter the Zabbix MySQL database name you wish to use (Example: zabbix_db):"  MYSQL_DATABASE
+
+if [ -z "$MYSQL_USERNAME" ]
+then
+      echo "${RED}Zabbix MySQL database username cannot be empty ${RESET}"
+      exit
+fi
+
+export MYSQL_DATABASE
+
 
 read -p "Enter the Zabbix hostname you wish to use (Example: Zabbix):"  ACME_HOSTNAME
 
@@ -217,13 +238,13 @@ sleep 2
 stop_spinner $?
 
 
-echo "[`date +%m/%d/%Y-%H:%M`] Git cloning zabbix-docker from https://github.com/zabbix/zabbix-docker to /opt/zabbix-docker" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/zabbix-docker directory" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Git cloning zabbix-docker from https://github.com/zabbix/zabbix-docker to /opt/zabbix-docker...'
+start_spinner 'Creating /opt/zabbix-docker directory'
 sleep 1
 
-#git clone zabbix-docker
-/usr/bin/git clone https://github.com/zabbix/zabbix-docker.git /opt/zabbix-docker >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+#create zabbix-docker directory
+/bin/mkdir -p /opt/zabbix-docker >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -237,14 +258,19 @@ else
 echo "${GREEN}[DONE] ${RESET}"
 fi
 
-echo "[`date +%m/%d/%Y-%H:%M`] Creating pre-requisite directories for Ofelia" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Creating required sub-directories under /opt/zabbix-docker" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Creating pre-requisite directories for Ofelia...'
+start_spinner 'Creating required sub-directories under /opt/zabbix-docker....'
 sleep 1
 
-#Create necessary directories and files
+#Create required subdirectories
 /bin/mkdir -p /opt/zabbix-docker/ofelia_config && \
-/bin/mkdir -p /opt/zabbix-docker/ofelia_logs >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/mkdir -p /opt/zabbix-docker/ofelia_logs && \
+/bin/mkdir -p /opt/zabbix-docker/db_data && \
+/bin/mkdir -p /opt/zabbix-docker/db_backups && \
+/bin/mkdir -p /opt/zabbix-docker/zabbix_data && \
+/bin/mkdir -p /opt/zabbix-docker/odbc && \
+/bin/mkdir -p /opt/zabbix-docker/zabbix_web >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -265,6 +291,15 @@ start_spinner 'Creating /opt/zabbix-docker/ofelia_config/config.ini...'
 sleep 1
 
 /bin/cp -r $SCRIPTPATH/ofelia_config/config.ini /opt/zabbix-docker/ofelia_config/config.ini >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/zabbix-docker/db_data/custom.cnf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+start_spinner 'Creating /opt/zabbix-docker/db_data/custom.cnf...'
+sleep 1
+
+/bin/cp -r $SCRIPTPATH/templates/custom.cnf /opt/zabbix-docker/db_data/custom.cnf >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -325,37 +360,46 @@ sleep 1
 stop_spinner $?
 
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/env_vars/.MYSQL_ROOT_PASSWORD file with Zabbix MySQL root password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring Configuring /opt/zabbix-docker/.env file with Zabbix MySQL root password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/env_vars/.MYSQL_ROOT_PASSWORD file with Zabbix MySQL root password...'
+start_spinner 'Configuring Configuring /opt/zabbix-docker/.env file with Zabbix MySQL root password...'
 sleep 1
 
-/bin/sed -i -e "s,root_pwd,${MYSQL_ROOT},g" "/opt/zabbix-docker/env_vars/.MYSQL_ROOT_PASSWORD" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s/MYSQLROOTPASSWORD/${MYSQL_ROOT_PASSWORD}/g" "/opt/zabbix-docker/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/env_vars/.MYSQL_USER file with Zabbix MySQL database Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/env_vars/.MYSQL_USER file with Zabbix MySQL database Username...'
+start_spinner 'Configuring /opt/zabbix-docker/.envfile with Zabbix MySQL database Username...'
 sleep 1
 
-/bin/sed -i -e "s,zabbix,${MYSQL_USERNAME},g" "/opt/zabbix-docker/env_vars/.MYSQL_USER" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s/MYSQLUSER/${MYSQL_USER}/g" "/opt/zabbix-docker/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/env_vars/.MYSQL_PASSWORD file with Zabbix MySQL database password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/env_vars/.MYSQL_PASSWORD file with Zabbix MySQL database password...'
+start_spinner 'Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database password...'
 sleep 1
 
 
-/bin/sed -i -e "s,zabbix,${MYSQL_PASSWORD},g" "/opt/zabbix-docker/env_vars/.MYSQL_PASSWORD" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s/MYSQLPASSWORD/${MYSQL_PASSWORD}/g" "/opt/zabbix-docker/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+start_spinner 'Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database name...'
+sleep 1
+
+
+/bin/sed -i -e "s/MYSQL_DATABASE/${MYSQL_DATABASE}/g" "/opt/zabbix-docker/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/docker-compose.yml file with network name of Traefik container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 

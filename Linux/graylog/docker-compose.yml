@@ -1,0 +1,146 @@
+version: "3.8"
+
+networks:
+  proxy:
+    external: true
+
+services:
+  mongodb:
+    image: "mongo:5.0"
+    volumes:
+      - "mongodb_data:/data/db"
+    restart: "always"
+    networks:
+      - proxy
+
+  opensearch:
+    image: "opensearchproject/opensearch:2.4.0"
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "bootstrap.memory_lock=true"
+      - "discovery.type=single-node"
+      - "action.auto_create_index=false"
+      - "plugins.security.ssl.http.enabled=false"
+      - "plugins.security.disabled=true"
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - "os_data:/usr/share/opensearch/data"
+    networks:
+      - proxy
+    restart: "always"
+
+  graylog:
+    hostname: "server"
+    image: "${GRAYLOG_IMAGE:-graylog/graylog:5.0}"
+    depends_on:
+      opensearch:
+        condition: "service_started"
+      mongodb:
+        condition: "service_started"
+    entrypoint: "/usr/bin/tini -- wait-for-it opensearch:9200 --  /docker-entrypoint.sh"
+    environment:
+      TZ: "${TZ}" #Please configure TZ in .env file
+      GRAYLOG_ROOT_TIMEZONE: "America/New_York"
+      GRAYLOG_NODE_ID_FILE: "/usr/share/graylog/data/config/node-id"
+      GRAYLOG_PASSWORD_SECRET: "${GRAYLOG_PASSWORD_SECRET}" #Please configure GRAYLOG_PASSWORD_SECRET in the .env file
+      GRAYLOG_ROOT_PASSWORD_SHA2: "${GRAYLOG_ROOT_PASSWORD_SHA2}" #Please configure GRAYLOG_ROOT_PASSWORD_SHA2 in the .env file
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      #GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:9000/"
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://graylog.domain.tld:9000/"
+      GRAYLOG_WEB_ENDPOINT_URI: "http://graylog.domain.tld:9000/api"
+      GRAYLOG_WEB_LISTEN_URI: "https://graylog.domain.tld:9000/"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
+      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+      GRAYLOG_HTTP_ENABLE_CORS: "true"
+      GRAYLOG_TRUSTED_PROXIES: "127.0.0.1/32, 0:0:0:0:0:0:0:1/128, 172.27.0.0/16"
+    ports:
+    - "5044:5044/tcp"   # Beats
+    - "5140:5140/udp"   # Syslog
+    - "5140:5140/tcp"   # Syslog
+    #- "514:514/udp"   # Syslog
+    #- "514:514/tcp"   # Syslog
+    - "5555:5555/tcp"   # RAW TCP
+    - "5555:5555/udp"   # RAW TCP
+    - "9000:9000/tcp"   # Server API
+    - "12201:12201/tcp" # GELF TCP
+    - "12201:12201/udp" # GELF UDP
+    #- "10000:10000/tcp" # Custom TCP port
+    #- "10000:10000/udp" # Custom UDP port
+    - "13301:13301/tcp" # Forwarder data
+    - "13302:13302/tcp" # Forwarder config
+    volumes:
+      - "graylog_data:/usr/share/graylog/data/data"
+      - "graylog_journal:/usr/share/graylog/data/journal"
+      - "graylog_config:/usr/share/graylog/data/config"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.graylog.entrypoints=http"
+      - "traefik.http.routers.graylog.rule=Host(`siem.domain.tld`)"
+      - "traefik.http.routers.graylog.middlewares=graylog-https-redirect"
+      - "traefik.http.routers.graylog-secure.entrypoints=https"
+      - "traefik.http.routers.graylog-secure.rule=Host(`siem.domain.tld`)"
+      - "traefik.http.routers.graylog-secure.tls=true"
+      - "traefik.http.routers.graylog-headers.middlewares=graylog-header"
+      #- "traefik.http.routers.graylog-secure.tls.certresolver=le"
+      - "traefik.http.routers.graylog-secure.service=graylog"
+
+      # Service definition
+      - "traefik.http.services.graylog.loadbalancer.server.port=9000"
+
+      # Middleware definitions
+      - "traefik.http.middlewares.graylog-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.graylog-header.headers.customresponseheaders.X-Graylog-Server-URL=https://siem.domain.tld/"
+      - "traefik.passHostHeader=true"
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - proxy
+
+    restart: "always"
+
+volumes:
+  mongodb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/mongodb_data
+
+  os_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/os_data
+
+  graylog_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/graylog_data
+
+  graylog_journal:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/graylog_journal
+
+  graylog_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/graylog_config
+

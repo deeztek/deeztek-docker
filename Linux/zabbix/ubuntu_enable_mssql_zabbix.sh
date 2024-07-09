@@ -79,24 +79,14 @@ sleep 1
 
 stop_spinner $?
 
-echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/zabbix-docker/zbx_env/ directory" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/zabbix-docker/odbc/odbc.ini file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Creating /opt/zabbix-docker/zbx_env/ directory...'
+start_spinner 'Creating /opt/zabbix-docker/odbc/odbc.ini file...'
 sleep 1
 
-mkdir -p /opt/zabbix-docker/zbx_env/ >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/cp -r $SCRIPTPATH/templates/odbc-template.ini /opt/zabbix-docker/odbc/odbc.ini >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
-
-echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/zabbix-docker/zbx_env/odbc.ini file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
-
-start_spinner 'Creating /opt/zabbix-docker/zbx_env/odbc.ini file...'
-sleep 1
-
-/bin/cp -r $SCRIPTPATH/templates/odbc-template.ini /opt/zabbix-docker/zbx_env/odbc.ini >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-stop_spinner $?
-
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.env file with Zabbix Host Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
@@ -118,37 +108,46 @@ sleep 1
 stop_spinner $?
 
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/env_vars/.MYSQL_ROOT_PASSWORD file with Zabbix MySQL root password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring Configuring /opt/zabbix-docker/.env file with Zabbix MySQL root password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/env_vars/.MYSQL_ROOT_PASSWORD file with Zabbix MySQL root password...'
+start_spinner 'Configuring Configuring /opt/zabbix-docker/.env file with Zabbix MySQL root password...'
 sleep 1
 
-/bin/sed -i -e "s,root_pwd,${MYSQL_ROOT},g" "/opt/zabbix-docker/env_vars/.MYSQL_ROOT_PASSWORD" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s/MYSQLROOTPASSWORD/${MYSQL_ROOT_PASSWORD}/g" "/opt/zabbix-docker/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/env_vars/.MYSQL_USER file with Zabbix MySQL database Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database Username" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/env_vars/.MYSQL_USER file with Zabbix MySQL database Username...'
+start_spinner 'Configuring /opt/zabbix-docker/.envfile with Zabbix MySQL database Username...'
 sleep 1
 
-/bin/sed -i -e "s,zabbix,${MYSQL_USERNAME},g" "/opt/zabbix-docker/env_vars/.MYSQL_USER" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s/MYSQLUSER/${MYSQL_USER}/g" "/opt/zabbix-docker/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/env_vars/.MYSQL_PASSWORD file with Zabbix MySQL database password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database password" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/env_vars/.MYSQL_PASSWORD file with Zabbix MySQL database password...'
+start_spinner 'Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database password...'
 sleep 1
 
 
-/bin/sed -i -e "s,zabbix,${MYSQL_PASSWORD},g" "/opt/zabbix-docker/env_vars/.MYSQL_PASSWORD" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s/MYSQLPASSWORD/${MYSQL_PASSWORD}/g" "/opt/zabbix-docker/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+
+start_spinner 'Configuring /opt/zabbix-docker/.env file with Zabbix MySQL database name...'
+sleep 1
+
+
+/bin/sed -i -e "s/MYSQL_DATABASE/${MYSQL_DATABASE}/g" "/opt/zabbix-docker/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/docker-compose.yml file with network name of Traefik container" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
@@ -159,30 +158,30 @@ sleep 1
 
 stop_spinner $?
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/zbx_env/odbc.ini file with MSSQL DSN Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/odbc/odbc.ini file with MSSQL DSN Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/zbx_env/odbc.ini file with MSSQL DSN Name...'
+start_spinner 'Configuring /opt/zabbix-docker/odbc/odbc.ini file with MSSQL DSN Name...'
 sleep 1
 
-/bin/sed -i -e "s,DSNNAME,${DSN_NAME},g" "/opt/zabbix-docker/zbx_env/odbc.ini" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s,DSNNAME,${DSN_NAME},g" "/opt/zabbix-docker/odbc/odbc.ini" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/zbx_env/odbc.ini file with MSSQL Server Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/odbc/odbc.ini file with MSSQL Server Name" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/zbx_env/odbc.ini file with MSSQL MSSQL Server Name...'
+start_spinner 'Configuring /opt/zabbix-docker/odbc/odbc.ini file with MSSQL MSSQL Server Name...'
 sleep 1
 
-/bin/sed -i -e "s,MSSQLSERVER,${MSSQL_SERVER},g" "/opt/zabbix-docker/zbx_env/odbc.ini" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s,MSSQLSERVER,${MSSQL_SERVER},g" "/opt/zabbix-docker/odbc/odbc.ini" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/zbx_env/odbc.ini file with MSSQL Server Port" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/zabbix-docker/odbc/odbc.ini file with MSSQL Server Port" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
-start_spinner 'Configuring /opt/zabbix-docker/zbx_env/odbc.ini file with MSSQL MSSQL Server Port...'
+start_spinner 'Configuring /opt/zabbix-docker/odbc/odbc.ini file with MSSQL MSSQL Server Port...'
 sleep 1
 
-/bin/sed -i -e "s,MSSQLPORT,${MSSQL_PORT},g" "/opt/zabbix-docker/zbx_env/odbc.ini" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s,MSSQLPORT,${MSSQL_PORT},g" "/opt/zabbix-docker/odbc/odbc.ini" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
