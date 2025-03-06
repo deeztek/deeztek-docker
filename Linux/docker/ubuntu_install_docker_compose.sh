@@ -160,16 +160,16 @@ fi
 echo "[`date +%m/%d/%Y-%H:%M`] Downloading and Installing Docker Compose Switch"
 
 #Download and install Docker Compose Switch
-curl -fL https://raw.githubusercontent.com/docker/compose-cli/main/scripts/install/install_linux.sh | sh
+#curl -fL https://raw.githubusercontent.com/docker/compose-cli/main/scripts/install/install_linux.sh | sh
 
-ERR=$?
-if [ $ERR != 0 ]; then
-THEERROR=$(($THEERROR+$ERR))
-echo "[`date +%m/%d/%Y-%H:%M`] ERROR: $ERR, downloading and installing Docker Compose Switch"
-exit 1
-else
-echo "[`date +%m/%d/%Y-%H:%M`] SUCCESS. Completed downloading and installing Docker Compose Switch"
-fi
+#ERR=$?
+#if [ $ERR != 0 ]; then
+#THEERROR=$(($THEERROR+$ERR))
+#echo "[`date +%m/%d/%Y-%H:%M`] ERROR: $ERR, downloading and installing Docker Compose Switch"
+#exit 1
+#else
+#echo "[`date +%m/%d/%Y-%H:%M`] SUCCESS. Completed downloading and installing Docker Compose Switch"
+#fi
 
 echo "[`date +%m/%d/%Y-%H:%M`] Printing out Docker Compose Version"
 

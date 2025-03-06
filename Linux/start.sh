@@ -17,7 +17,7 @@ select opt in "${options[@]}"
 do
     case $opt in
         "Install Docker and Docker Compose")
-            cd docker/ && bash ubuntu_1804_install_docker_compose.sh
+            cd docker/ && bash ubuntu_install_docker_compose.sh
             cd -
             break
             ;;
