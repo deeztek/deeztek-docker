@@ -1,0 +1,97 @@
+services:
+  sftpgo:
+    image: "drakkan/sftpgo:latest"
+    container_name: "sftpgo"
+    restart: unless-stopped
+    networks:
+      - proxy
+    ports:
+      - "8090:8090"
+      - "5007:5007"
+      - "2022:2022"
+      - "2121:2121"
+      - "50000-50100:50000-50100"
+    environment:
+      SFTPGO_HTTPD__BINDINGS__0__PORT: 8090
+      SFTPGO_WEBDAVD__BINDINGS__0__PORT: 5007
+      SFTPGO_FTPD__BINDINGS__0__PORT: 2121
+      SFTPGO_FTPD__BINDINGS__0__TLS_MODE: 1
+      SFTPGO_FTPD__BINDINGS__0__CERTIFICATE_FILE: "/certs/certificate.pem"
+      SFTPGO_FTPD__BINDINGS__0__CERTIFICATE_KEY_FILE: "/certs/certificate.key"
+      SFTPGO_FTPD__BINDINGS__0__MIN_TLS_VERSION: "12"
+      SFTPGO_DATA_PROVIDER__DRIVER: "mysql"
+      SFTPGO_DATA_PROVIDER__NAME: "sftpgo_db"
+      SFTPGO_DATA_PROVIDER__HOST: 192.168.xxx.xxx
+      SFTPGO_DATA_PROVIDER__PORT: 3306
+      SFTPGO_DATA_PROVIDER__USERNAME: "sftpgo"
+      SFTPGO_DATA_PROVIDER__PASSWORD: "supersecretpassword"
+      SFTPGO_COMMON__DEFENDER__ENABLED: true
+      SFTPGO_COMMON__DEFENDER__BAN_TIME: 15
+      SFTPGO_COMMON__DEFENDER__BAN_TIME_INCREMENT: 100
+      SFTPGO_COMMON__DEFENDER__THRESHOLD: 5
+      SFTPGO_COMMON__DEFENDER__OBSERVATION_TIME: 15
+    volumes:
+      - sftpgo_data:/srv/sftpgo
+      - sftpgo_home:/var/lib/sftpgo
+      - certs:/certs
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      # Routers
+      - "traefik.http.routers.sftpgo.entrypoints=http"
+      - "traefik.http.routers.sftpgo.rule=Host(`sftp.domain.tld`)"
+      - "traefik.http.routers.sftpgo.middlewares=sftpgo-https-redirect"
+      - "traefik.http.routers.sftpgo-secure.entrypoints=https"
+      - "traefik.http.routers.sftpgo-secure.rule=Host(`sftp.domain.tld`)"
+      - "traefik.http.routers.sftpgo-secure.tls=true"
+      #- "traefik.http.routers.sftpgo-secure.tls.certresolver=le"
+      - "traefik.http.routers.sftpgo-secure.service=sftpgo"
+      #Service definition
+      - "traefik.http.services.sftpgo.loadbalancer.server.port=8090"
+
+      #Middleware definitions
+      - "traefik.http.middlewares.sftpgo-https-redirect.redirectscheme.scheme=https"
+
+      #Authelia authentication
+      #- "traefik.http.routers.sftpgo-secure.middlewares=authelia@docker"
+
+
+      # Watchtower
+      #- "com.centurylinklabs.watchtower.enable=true"
+
+volumes:
+  sftpgo_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/sftpgo/data
+
+  sftpgo_home:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/sftpgo/home
+
+
+  certs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/data/certs
+
+  smb_share:
+    driver_opts:
+      type: cifs
+      o: vers=3.02,mfsymlinks,smb_username=username,password=smb_password,domain=smb_domain,file_mode=0777,dir_mode=0777,iocharset=utf8
+      device: "//smb_host/smb_share"
+
+
+
+networks:
+  proxy:
+    external: true
