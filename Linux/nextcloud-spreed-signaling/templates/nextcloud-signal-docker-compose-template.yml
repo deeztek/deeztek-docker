@@ -1,4 +1,3 @@
-version: '3'
 
 networks:
   spreed:
@@ -62,7 +61,7 @@ services:
       - coturn
 
   nats:
-    image: nats:2.2.1
+    image: nats:2.10
     volumes:
       - ./gnatsd.conf:/config/gnatsd.conf
     command: ["-c", "/config/gnatsd.conf"]
@@ -109,7 +108,6 @@ services:
       - "stdout"
       - "--stale-nonce=600"
       - "--use-auth-secret"
-      - "--lt-cred-mech"
       - "--fingerprint"
       - "--no-software-attribute"
       - "--no-multicast-peers"

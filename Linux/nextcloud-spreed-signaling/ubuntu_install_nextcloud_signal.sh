@@ -392,7 +392,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/serve
 start_spinner 'Configuring server.conf file with Nextcloud Shared Secret...'
 sleep 1
 
-/bin/sed -i -e "s,SHAREDSECRET,${SHARED_SECRET},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+/bin/sed -i -e "s,STATICSECRET,${STATIC_SECRET},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
