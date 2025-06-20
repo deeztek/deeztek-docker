@@ -44,7 +44,7 @@ echo "Starting Docker Compose $DOCKERCOMPOSEVERSION Installation" | boxes -d sto
 echo "[`date +%m/%d/%Y-%H:%M`] Installing prerequisites" 
 
 #Install Prerequisites
-/usr/bin/apt install -y apt-transport-https ca-certificates curl software-properties-common curl nfs-common
+apt install -y apt-transport-https ca-certificates curl software-properties-common curl nfs-common
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -58,7 +58,7 @@ fi
 echo "[`date +%m/%d/%Y-%H:%M`] Adding GPG Key for Official Docker Repository"
 
 #Add GPG Key for official Docker Repository:
-/usr/bin/curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -72,7 +72,7 @@ fi
 echo "[`date +%m/%d/%Y-%H:%M`] Adding Docker repository to APT Sources"
 
 #Add Docker repository to APT sources
-/usr/bin/add-apt-repository -y  "deb [arch=amd64] https://download.docker.com/linux/ubuntu $UBUNTUCODENAME stable"
+add-apt-repository -y  "deb [arch=amd64] https://download.docker.com/linux/ubuntu $UBUNTUCODENAME stable"
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -86,7 +86,7 @@ fi
 echo "[`date +%m/%d/%Y-%H:%M`] Updating Sources"
 
 #Update Sources
-/usr/bin/apt update
+apt update
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -100,7 +100,7 @@ fi
 echo "[`date +%m/%d/%Y-%H:%M`] Installing Docker"
 
 #Install Docker
-/usr/bin/apt install -y docker-ce
+apt install -y docker-ce
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -132,7 +132,7 @@ FILENAME=docker-compose-`uname -s`-`uname -m`
 FILENAMESMALL=${FILENAME,,}
 
 #Download Docker Compose Version Specified above
-/usr/bin/curl -L https://github.com/docker/compose/releases/download/$DOCKERCOMPOSEVERSION/$FILENAMESMALL -o /usr/local/bin/docker-compose
+curl -L https://github.com/docker/compose/releases/download/$DOCKERCOMPOSEVERSION/$FILENAMESMALL -o /usr/local/bin/docker-compose
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -146,7 +146,7 @@ fi
 echo "[`date +%m/%d/%Y-%H:%M`] Making Docker Compose Executable"
 
 #Make docker-compose executable
-/bin/chmod +x /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -174,7 +174,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Downloading and Installing Docker Compose Switch"
 echo "[`date +%m/%d/%Y-%H:%M`] Printing out Docker Compose Version"
 
 #Verify succesfull installation by printing out version
-/usr/local/bin/docker-compose --version
+docker-compose --version
 
 ERR=$?
 if [ $ERR != 0 ]; then
