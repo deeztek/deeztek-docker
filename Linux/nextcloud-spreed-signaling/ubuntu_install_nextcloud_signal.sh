@@ -186,7 +186,7 @@ start_spinner 'Creating .gitignore file...'
 sleep 1
 
 #create /opt/nextcloud-spreed-signaling/.gitignore
-/bin/cp -r $SCRIPTPATH/templates/.gitignore-template /opt/nextcloud-spreed-signaling/.gitignore >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cp -r $SCRIPTPATH/templates/.gitignore-template /opt/nextcloud-spreed-signaling/.gitignore >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -196,7 +196,27 @@ start_spinner 'Creating .env file...'
 sleep 1
 
 #create /opt/nextcloud-spreed-signaling/.env
-/bin/cp -r $SCRIPTPATH/templates/.env-template /opt/nextcloud-spreed-signaling/.env >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cp -r $SCRIPTPATH/templates/.env-template /opt/nextcloud-spreed-signaling/.env >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/nextcloud-spreed-signaling/coturn directory" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Creating coturn directory...'
+sleep 1
+
+#create /opt/nextcloud-spreed-signaling/.env
+mkdir -p /opt/nextcloud-spreed-signaling/coturn >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/nextcloud-spreed-signaling/coturn/fullchain.pem and /opt/nextcloud-spreed-signaling/coturn/privkey.pem placeholder files" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Creating fullchain.pem and privkey.pem placeholder files...'
+sleep 1
+
+#create /opt/nextcloud-spreed-signaling/coturn/fullchain.pem and /opt/nextcloud-spreed-signaling/coturn/privkey.pem
+touch /opt/nextcloud-spreed-signaling/coturn/fullchain.pem && touch /opt/nextcloud-spreed-signaling/coturn/privkey.pem >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -206,7 +226,7 @@ start_spinner 'Creating server.conf file...'
 sleep 1
 
 #create /opt/nextcloud-spreed-signaling/server.conf
-/bin/cp -r $SCRIPTPATH/templates/server-template.conf /opt/nextcloud-spreed-signaling/server.conf >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cp -r $SCRIPTPATH/templates/server-template.conf /opt/nextcloud-spreed-signaling/server.conf >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -215,7 +235,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/docker-compose.yml file" >> $SCRIPT
 start_spinner 'Creating docker-compose.yml...'
 sleep 1
 
-/bin/cp $SCRIPTPATH/templates/nextcloud-signal-docker-compose-template.yml /opt/nextcloud-spreed-signaling/docker-compose.yml >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cp $SCRIPTPATH/templates/nextcloud-signal-docker-compose-template.yml /opt/nextcloud-spreed-signaling/docker-compose.yml >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -225,9 +245,10 @@ start_spinner 'Creating /etc/cron.d/certbot_renew file...'
 sleep 1
 
 #create /opt/nextcloud-spreed-signaling/server.conf
-/bin/cp -r $SCRIPTPATH/templates/certbot_renew /etc/cron.d/certbot_renew >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cp -r $SCRIPTPATH/templates/certbot_renew /etc/cron.d/certbot_renew >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
+
 
 echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
@@ -235,9 +256,10 @@ start_spinner 'Creating Nginx default site file...'
 sleep 1
 
 #create /opt/nextcloud-spreed-signaling/nginx/conf/nginx/default
-/bin/cp -rf $SCRIPTPATH/nginx/ /opt/nextcloud-spreed-signaling/nginx/ >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+cp -rf $SCRIPTPATH/nginx/ /opt/nextcloud-spreed-signaling/nginx/ >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
+
 
 echo "[`date +%m/%d/%Y-%H:%M`] Creating Certbot Certificate Directory Structure" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
@@ -247,6 +269,10 @@ sleep 1
 #create /opt/nextcloud-spreed-signaling/certbot/conf/dummy directory
 mkdir -p /opt/nextcloud-spreed-signaling/certbot >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/deploy >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/pre >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
@@ -258,7 +284,23 @@ start_spinner 'Generating Self Signed Certificate for Nginx...'
 sleep 1
 
 #generate self signed cert for Nginx
-/usr/bin/openssl req -batch -x509 -newkey rsa:4096 -nodes -keyout /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/privkey.pem -out /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/fullchain.pem -sha256 -days 1825 >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+openssl req -batch -x509 -newkey rsa:4096 -nodes -keyout /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/privkey.pem -out /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/fullchain.pem -sha256 -days 1825 >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+start_spinner 'Creating copy-coturn-certs.sh file...'
+sleep 1
+
+#create /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh
+cp -r $SCRIPTPATH/templates/copy-coturn-certs-template.sh /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+start_spinner 'Making copy-coturn-certs.sh file executable...'
+sleep 1
+
+#Make /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh executable
+chmod +x /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -271,7 +313,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Generating Static Secret Random String" >> $SCRIP
 start_spinner 'Generating Static Secret Random String...'
 sleep 1
 
-STATIC_SECRET=`/usr/bin/openssl rand -hex 32` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+STATIC_SECRET=`openssl rand -hex 32` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -285,7 +327,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Generating Hash Key Random String" >> $SCRIPTPATH
 start_spinner 'Generating Hash Key Random String...'
 sleep 1
 
-HASH_KEY=`/usr/bin/openssl rand -base64 16` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+HASH_KEY=`openssl rand -base64 16` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -294,7 +336,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Generating Block Key Random String" >> $SCRIPTPAT
 start_spinner 'Generating Block Key Random String...'
 sleep 1
 
-BLOCK_KEY=`/usr/bin/openssl rand -base64 16` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+BLOCK_KEY=`openssl rand -base64 16` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -304,7 +346,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Generating Nextcloud Shared Secret Random String"
 start_spinner 'Generating Nextcloud Shared Secret Random String...'
 sleep 1
 
-SHARED_SECRET=`/usr/bin/openssl rand -hex 32` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+SHARED_SECRET=`openssl rand -hex 32` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -317,7 +359,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Generating Api Key Random String" >> $SCRIPTPATH/
 start_spinner 'Generating Api Key Random String...'
 sleep 1
 
-API_KEY=`/usr/bin/openssl rand -hex 16` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+API_KEY=`openssl rand -hex 16` >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -332,7 +374,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/.env 
 start_spinner 'Configuring .env file with Nextcloud-Signal Hostname...'
 sleep 1
 
-/bin/sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -341,7 +383,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/.env 
 start_spinner 'Configuring .env file with Nextcloud-Signal Domain...'
 sleep 1
 
-/bin/sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -350,7 +392,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/.env 
 start_spinner 'Configuring .env file with Static Secret...'
 sleep 1
 
-/bin/sed -i -e "s,STATICSECRET,${STATIC_SECRET},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,STATICSECRET,${STATIC_SECRET},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -363,7 +405,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/serve
 start_spinner 'Configuring server.conf file with Hash Key...'
 sleep 1
 
-/bin/sed -i -e "s,HASHKEY,${HASH_KEY},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,HASHKEY,${HASH_KEY},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -372,7 +414,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/serve
 start_spinner 'Configuring server.conf file with Block Key...'
 sleep 1
 
-/bin/sed -i -e "s,BLOCKKEY,${BLOCK_KEY},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,BLOCKKEY,${BLOCK_KEY},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -382,17 +424,26 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/serve
 start_spinner 'Configuring server.conf file with Nextloud instance URL...'
 sleep 1
 
-/bin/sed -i -e "s,NEXTCLOUDSERVER,${NEXTCLOUD_SERVER},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,NEXTCLOUDSERVER,${NEXTCLOUD_SERVER},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/server.conf file with Nextcloud Static Secret" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Configuring server.conf file with Nextcloud Static Secret...'
+sleep 1
+
+sed -i -e "s,STATICSECRET,${STATIC_SECRET},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/server.conf file with Nextcloud Shared Secret" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 start_spinner 'Configuring server.conf file with Nextcloud Shared Secret...'
 sleep 1
 
-/bin/sed -i -e "s,STATICSECRET,${STATIC_SECRET},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SHAREDSECRET,${SHARED_SECRET},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -401,9 +452,11 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/serve
 start_spinner 'Configuring server.conf file with Api Key...'
 sleep 1
 
-/bin/sed -i -e "s,APIKEY,${API_KEY},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,APIKEY,${API_KEY},g" "/opt/nextcloud-spreed-signaling/server.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
+
+
 
 #=== CONFIGURE /opt/nextcloud-spreed-signaling/server.conf ENDS HERE ===
 
@@ -414,7 +467,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/nginx
 start_spinner 'Configuring Nginx default file with Nextcloud-Signal Hostname...'
 sleep 1
 
-/bin/sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -423,7 +476,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/nginx
 start_spinner 'Configuring Nginx default file with Nextcloud-Signal Domain...'
 sleep 1
 
-/bin/sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -436,7 +489,7 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /etc/cron.d/certbot_renew file with N
 start_spinner 'Configuring /etc/cron.d/certbot_renew file with Nextcloud-Signal Hostname...'
 sleep 1
 
-/bin/sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/etc/cron.d/certbot_renew" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/etc/cron.d/certbot_renew" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -446,12 +499,34 @@ echo "[`date +%m/%d/%Y-%H:%M`] Configuring /etc/cron.d/certbot_renew file with N
 start_spinner 'Configuring /etc/cron.d/certbot_renew file with Nextcloud-Signal Domain...'
 sleep 1
 
-/bin/sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/etc/cron.d/certbot_renew" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/etc/cron.d/certbot_renew" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
 
 #=== CONFIGURE /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default ENDS HERE ===
+
+#=== CONFIGURE /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh STARTS HERE ===
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh file with Nextcloud-Signal Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Configuring copy-coturn-certs.sh file with Nextcloud-Signal Hostname...'
+sleep 1
+
+sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh file with Nextcloud-Signal Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+start_spinner 'Configuring copy-coturn-certs.sh file with Nextcloud-Signal Domain...'
+sleep 1
+
+sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+#=== CONFIGURE /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh ENDS HERE ===
 
 
 echo "[`date +%m/%d/%Y-%H:%M`] Building Nextcloud-Signal Docker Containers" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1

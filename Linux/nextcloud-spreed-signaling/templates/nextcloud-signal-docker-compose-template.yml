@@ -95,6 +95,9 @@ services:
       - "3478:3478/tcp"
       - "3478:3478/udp"
     container_name: nextcloud_spreed_coturn
+    volumes:
+      - ./coturn/fullchain.pem:/etc/coturn/fullchain.pem
+      - ./coturn/privkey.pem:/etc/coturn/privkey.pem:rw
     logging:
       options:
         max-size: 10m
@@ -111,6 +114,10 @@ services:
       - "--fingerprint"
       - "--no-software-attribute"
       - "--no-multicast-peers"
+      - "--cert"
+      - "/etc/coturn/fullchain.pem"
+      - "--pkey"
+      - "/etc/coturn/privkey.pem"
     restart: unless-stopped
 
 

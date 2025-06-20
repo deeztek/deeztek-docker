@@ -92,9 +92,7 @@ fi
 echo "Re-configuring Nginx for Certbot Certificate Production and Restarting Nginx Container"
 
 /bin/sed -i -e "s,dummy,live,g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf" && \
-cd /opt/nextcloud-spreed-signaling && \
-/usr/local/bin/docker-compose stop nginx && \
-/usr/local/bin/docker-compose start nginx
+docker container restart nextcloud_spreed_nginx
 
 
 ERR=$?
@@ -105,3 +103,15 @@ exit 1
 else
 echo "${GREEN}Done ${RESET}"
 fi
+
+echo "Re-configuring Coturn for Certbot Certificate Production and Restarting Coturn Container"
+
+#Copy certificate and private key to coturn
+cp /opt/nextcloud-spreed-signaling/certbot/conf/live/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/fullchain.pem /opt/nextcloud-spreed-signaling/coturn/fullchain.pem && \
+cp /opt/nextcloud-spreed-signaling/certbot/conf/live/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/privkey.pem /opt/nextcloud-spreed-signaling/coturn/privkey.pem && \
+
+#Set certificate and key permissions
+chmod 0644 -R /opt/nextcloud-spreed-signaling/coturn/ && \
+
+#Restart Coturn container to load new certificate and key
+docker container restart nextcloud_spreed_coturn
