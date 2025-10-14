@@ -72,7 +72,7 @@ export SIGNAL_DOMAIN
 
 echo "Requesting Certbot Certificate Production"
 
-docker run -it --rm --name certbot certonly -v ./nginx/conf/www:/var/www/certbot -v ./certbot/conf/:/etc/letsencrypt -v ./coturn:/coturn --webroot --webroot-path /var/www/certbot/ -d $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN
+docker run --rm --name certbot -v ./nginx/www:/var/www/certbot -v ./certbot/conf/:/etc/letsencrypt -v ./coturn:/coturn certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN
 
 ERR=$?
 if [ $ERR != 0 ]; then
