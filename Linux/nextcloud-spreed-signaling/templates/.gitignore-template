@@ -16,3 +16,4 @@ docker-compose.yml
 nginx/
 certbot/
 coturn/
+scripts/

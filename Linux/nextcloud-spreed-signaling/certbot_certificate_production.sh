@@ -20,11 +20,6 @@ if [ ! -f "/usr/bin/docker" ]; then
       exit 1
    fi
 
-#Check if /usr/local/bin/docker-compose exists and if not exit
-if [ ! -f "/usr/local/bin/docker-compose" ]; then
-      echo "${RED}Docker Compose does not seem to be installed. Please install Docker Compose and try again. Exiting for now... ${RESET}"
-      exit 1
-   fi
 
 #GET INPUTS
 echo "Certbot Certificate Production" | boxes -d stone -p a2v1
@@ -77,8 +72,7 @@ export SIGNAL_DOMAIN
 
 echo "Requesting Certbot Certificate Production"
 
-cd /opt/nextcloud-spreed-signaling && \
-/usr/local/bin/docker-compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ -d $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN
+docker run -it --rm --name certbot certonly -v ./nginx/conf/www:/var/www/certbot -v ./certbot/conf/:/etc/letsencrypt -v ./coturn:/coturn --webroot --webroot-path /var/www/certbot/ -d $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN
 
 ERR=$?
 if [ $ERR != 0 ]; then

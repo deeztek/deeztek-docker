@@ -239,16 +239,6 @@ cp $SCRIPTPATH/templates/nextcloud-signal-docker-compose-template.yml /opt/nextc
 
 stop_spinner $?
 
-echo "[`date +%m/%d/%Y-%H:%M`] Creating /etc/cron.d/certbot_renew file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Creating /etc/cron.d/certbot_renew file...'
-sleep 1
-
-#create /opt/nextcloud-spreed-signaling/server.conf
-cp -r $SCRIPTPATH/templates/certbot_renew /etc/cron.d/certbot_renew >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-stop_spinner $?
-
 
 echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
@@ -269,6 +259,7 @@ sleep 1
 #create /opt/nextcloud-spreed-signaling/certbot/conf/dummy directory
 mkdir -p /opt/nextcloud-spreed-signaling/certbot >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/ofelia >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/deploy >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
@@ -288,19 +279,24 @@ openssl req -batch -x509 -newkey rsa:4096 -nodes -keyout /opt/nextcloud-spreed-s
 
 stop_spinner $?
 
-start_spinner 'Creating copy-coturn-certs.sh file...'
+start_spinner 'Creating certbot_renew.sh file...'
 sleep 1
 
-#create /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh
-cp -r $SCRIPTPATH/templates/copy-coturn-certs-template.sh /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+#create /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh
+cp -r $SCRIPTPATH/templates/certbot_renew-template /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-start_spinner 'Making copy-coturn-certs.sh file executable...'
+start_spinner 'Making certbot_renew.sh file executable...'
 sleep 1
 
-#Make /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh executable
-chmod +x /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+#Make /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh executable
+chmod +x /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+
+stop_spinner $?
+
+#create /opt/nextcloud-spreed-signaling/ofelia/config.ini
+cp -r $SCRIPTPATH/templates/config.ini-template /opt/nextcloud-spreed-signaling/ofelia/config.ini >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -482,51 +478,27 @@ stop_spinner $?
 
 #=== CONFIGURE /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default ENDS HERE ===
 
-#=== CONFIGURE /etc/cron.d/certbot_renew STARTS HERE ===
+#=== CONFIGURE /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh STARTS HERE ===
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /etc/cron.d/certbot_renew file with Nextcloud-Signal Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh file with Nextcloud-Signal Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-start_spinner 'Configuring /etc/cron.d/certbot_renew file with Nextcloud-Signal Hostname...'
+start_spinner 'Configuring cerbot_renew.sh file with Nextcloud-Signal Hostname...'
 sleep 1
 
-sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/etc/cron.d/certbot_renew" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh file with Nextcloud-Signal Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /etc/cron.d/certbot_renew file with Nextcloud-Signal Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Configuring /etc/cron.d/certbot_renew file with Nextcloud-Signal Domain...'
+start_spinner 'Configuring cerbot_renew.sh file with Nextcloud-Signal Domain...'
 sleep 1
 
-sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/etc/cron.d/certbot_renew" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-
-#=== CONFIGURE /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default ENDS HERE ===
-
-#=== CONFIGURE /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh STARTS HERE ===
-
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh file with Nextcloud-Signal Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Configuring copy-coturn-certs.sh file with Nextcloud-Signal Hostname...'
-sleep 1
-
-sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-stop_spinner $?
-
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh file with Nextcloud-Signal Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Configuring copy-coturn-certs.sh file with Nextcloud-Signal Domain...'
-sleep 1
-
-sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-stop_spinner $?
-
-#=== CONFIGURE /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post/copy-coturn-certs.sh ENDS HERE ===
+#=== CONFIGURE /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh ENDS HERE ===
 
 
 echo "[`date +%m/%d/%Y-%H:%M`] Building Nextcloud-Signal Docker Containers" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1

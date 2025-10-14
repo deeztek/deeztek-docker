@@ -27,17 +27,26 @@ services:
       - janus
       - coturn
 
-  certbot:
-    image: certbot/certbot:latest
-    container_name: nextcloud_spreed_certbot
-    networks:
-      - spreed
+  ofelia:
+    image: 'mcuadros/ofelia:latest'
+    container_name: nextcloud_spreed_cron
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
+
+    environment:
+      - TZ=${TIMEZONE}
     volumes:
-      - ./nginx/conf/www:/var/www/certbot/:rw
-      - ./certbot/conf/:/etc/letsencrypt/:rw
+      # the ofelia config file
+      - ./ofelia:/etc/ofelia
+      # your docker reg credentials
+      #- /home/centos/.docker/config.json:/root/.docker/config.json
+      # the docker socket so ofelia can docker run ...
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
     depends_on:
       - nginx
-
 
   spreedbackend:
     build:

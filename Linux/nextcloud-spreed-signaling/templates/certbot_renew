@@ -1,1 +1,0 @@
-30 2 * * * root cd /opt/nextcloud-spreed-signaling/ && /usr/local/bin/docker-compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ -d SIGNALHOSTNAME.SIGNALDOMAIN && /usr/local/bin/docker-compose stop nginx && /usr/local/bin/docker-compose start nginx &>/dev/null
