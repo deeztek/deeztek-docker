@@ -264,6 +264,7 @@ mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks >> $SCRIPTPA
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/deploy >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/pre >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/logs >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 

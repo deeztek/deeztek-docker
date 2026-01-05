@@ -3,3 +3,4 @@ schedule = 0 30 01 * * *
 command = /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh
 image = docker:cli
 volume = /var/run/docker.sock:/var/run/docker.sock
+volume = /opt/nextcloud-spreed-signaling/scripts:/opt/nextcloud-spreed-signaling/scripts

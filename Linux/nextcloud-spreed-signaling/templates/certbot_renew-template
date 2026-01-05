@@ -3,15 +3,15 @@
 #Attempt Renewal
 echo 'Attempting renewal'
 
-RENEWAL=`docker run --rm --name certbot -v /opt/nextcloud-spreed-signaling/nginx/www:/var/www/certbot -v /opt/nextcloud-spreed-signaling/certbot/conf/:/etc/letsencrypt -v /opt/nextcloud-spreed-signaling/coturn:/coturn certbot/certbot:latest renew --webroot --webroot-path /var/www/certbot/`
+RENEWAL=`docker run --rm --name certbot -v /opt/nextcloud-spreed-signaling/nginx/www:/var/www/certbot -v /opt/nextcloud-spreed-signaling/certbot/conf/:/etc/letsencrypt -v /opt/nextcloud-spreed-signaling/certbot/logs:/var/log/letsencrypt -v /opt/nextcloud-spreed-signaling/coturn:/coturn certbot/certbot:latest renew --webroot --webroot-path /var/www/certbot/`
 
 if [[ $RENEWAL == *"Congratulations"* ]]; then
 
 echo 'Certificate was renewed. Copying Certificates and Restarting Containers'
 
 #Copy certificate and private key to coturn
-cp /opt/nextcloud-spreed-signaling/certbot/conf/live/signal.deeztek.com/fullchain.pem /opt/nextcloud-spreed-signaling/coturn/fullchain.pem && \
-cp /opt/nextcloud-spreed-signaling/certbot/conf/live/signal.deeztek.com/privkey.pem /opt/nextcloud-spreed-signaling/coturn/privkey.pem && \
+cp /opt/nextcloud-spreed-signaling/certbot/conf/live/SIGNALHOSTNAME.SIGNALDOMAIN/fullchain.pem /opt/nextcloud-spreed-signaling/coturn/fullchain.pem && \
+cp /opt/nextcloud-spreed-signaling/certbot/conf/live/SIGNALHOSTNAME.SIGNALDOMAIN/privkey.pem /opt/nextcloud-spreed-signaling/coturn/privkey.pem && \
 
 #Set certificate and key permissions
 chmod 0644 -R /opt/nextcloud-spreed-signaling/coturn/ && \
