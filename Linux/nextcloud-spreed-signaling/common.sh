@@ -25,13 +25,33 @@ strip_ansi() {
 #
 # Usage: echo "text" | banner
 banner() {
-  local line plain width=0
+  local line plain sub width=0 max
   local -a lines=()
 
+  # Keep the box within the terminal. The border and padding consume 6
+  # columns. Falls back to 80 when the width cannot be determined, e.g. when
+  # output is piped or redirected to a log.
+  max=$(tput cols 2>/dev/null)
+  case $max in ''|*[!0-9]*) max=80 ;; esac
+  max=$((max - 6))
+  [ $max -lt 20 ] && max=20
+
   while IFS= read -r line || [ -n "$line" ]; do
-    lines+=("$line")
     plain=$(printf '%s' "$line" | strip_ansi)
-    [ ${#plain} -gt $width ] && width=${#plain}
+
+    # Wrap anything too wide, preferring to break at spaces. Without this a
+    # long value such as a log path produces a box wider than the terminal,
+    # which the terminal then wraps and the borders appear ragged.
+    if [ ${#plain} -gt $max ]; then
+      while IFS= read -r sub; do
+        lines+=("$sub")
+        plain=$(printf '%s' "$sub" | strip_ansi)
+        [ ${#plain} -gt $width ] && width=${#plain}
+      done < <(printf '%s\n' "$line" | fold -s -w $max)
+    else
+      lines+=("$line")
+      [ ${#plain} -gt $width ] && width=${#plain}
+    fi
   done
 
   local border
