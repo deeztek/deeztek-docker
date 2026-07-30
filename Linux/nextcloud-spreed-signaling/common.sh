@@ -93,6 +93,51 @@ resolve_fqdn() {
   printf '%s' "$ip"
 }
 
+#=== certbot_account_args ===
+#
+# Collects Lets Encrypt account details and echoes the corresponding certbot
+# flags on stdout. Prompts go to stderr so the caller can capture the result
+# with $(...).
+#
+# Certbot runs here through "docker run" with no TTY and no stdin, so it cannot
+# prompt for the terms of service or an email address itself. It reports
+# "Skipped user interaction because Certbot doesn't appear to be running in a
+# terminal" and then aborts with EOFError. Gathering the answers here and
+# passing --non-interactive makes the outcome the same on every run instead of
+# depending on whether an account already happens to exist.
+#
+# Returns 1 if the terms of service are declined.
+certbot_account_args() {
+  local email agree
+
+  echo "" >&2
+  echo "Lets Encrypt requires an account. The registration is stored under" >&2
+  echo "$BASE/certbot/conf/accounts and is reused for renewals." >&2
+  echo "" >&2
+  echo "The Lets Encrypt Terms of Service are published at:" >&2
+  echo "  https://letsencrypt.org/repository/" >&2
+  echo "" >&2
+
+  read -p "Do you agree to the Lets Encrypt Terms of Service? [y/N]: " agree
+  case "$agree" in
+    [Yy]*) ;;
+    *)
+      echo "" >&2
+      echo "${RED}You must agree to the Terms of Service to obtain a certificate. ${RESET}" >&2
+      return 1
+      ;;
+  esac
+
+  read -p "Enter an email address for expiry notices (leave empty for none): " email
+
+  if [ -n "$email" ]; then
+     printf -- '--non-interactive --agree-tos --email %s' "$email"
+  else
+     echo "${RED}Registering without an email address. You will not be warned before expiry. ${RESET}" >&2
+     printf -- '--non-interactive --agree-tos --register-unsafely-without-email'
+  fi
+}
+
 #=== set_colours ===
 #
 # Sets RED/GREEN/RESET, empty if the output is not a terminal or tput is

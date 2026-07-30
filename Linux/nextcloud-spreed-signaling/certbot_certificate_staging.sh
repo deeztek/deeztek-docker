@@ -99,13 +99,20 @@ fi
 #Export the variable
 export SIGNAL_FQDN
 
+#Collect the Lets Encrypt account details up front. Certbot cannot prompt for
+#them from inside "docker run" with no TTY.
+CERTBOT_ACCOUNT_ARGS=`certbot_account_args`
+if [ $? -ne 0 ]; then
+      exit 1
+fi
+
 #The webroot must be the directory nginx serves as /config/www, which is
 #$BASE/nginx/conf/www on the host. Paths must be absolute for docker run.
 docker run --rm --name certbot \
   -v $BASE/nginx/conf/www:/var/www/certbot \
   -v $BASE/certbot/conf/:/etc/letsencrypt \
   -v $BASE/certbot/logs:/var/log/letsencrypt \
-  certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d $SIGNAL_FQDN
+  certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ $CERTBOT_ACCOUNT_ARGS --dry-run -d $SIGNAL_FQDN
 
 ERR=$?
 if [ $ERR != 0 ]; then

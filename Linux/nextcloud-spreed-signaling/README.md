@@ -10,7 +10,7 @@ Original Credit and Inspiration: [MARKUS WEINGÄRTNER](https://markus-blog.de/in
 
 Spreed standalone signaling server requires a fully updated Linux machine with the Docker engine and the **docker compose plugin** (not the legacy `docker-compose` binary) installed, as well as a fully functioning Nextcloud installation.
 
-The installation script also needs `boxes`, `git`, `curl` and `openssl`. It uses them if they are already present, and installs them automatically where `apt-get` is available. On any other system, install them with your own package manager first and the script will pick them up.
+The installation script also needs `git`, `curl` and `openssl`. It uses them if they are already present, and otherwise installs them with whichever of `apt-get`, `dnf`, `yum`, `zypper`, `pacman` or `apk` is available. If none is found it tells you what to install and exits.
 
 
 ## Prerequisites
@@ -113,7 +113,7 @@ Before attempting to get a production Lets Encrypt certificate, you should test 
 sudo bash certbot_certificate_staging.sh
 ```
 
-The script will ask you for an e-mail address and it will ask you to agree to the Lets Ecnrypt Terms of Service. If it all goes well, it will output the following indicating success:
+The script asks you to agree to the Lets Encrypt Terms of Service and for an e-mail address for expiry notices, then runs certbot non-interactively. If it all goes well, it will output the following indicating success:
 
 ```
 ...
@@ -127,7 +127,7 @@ If succesful, you can now safely run the following script to get a production Le
 sudo bash certbot_certificate_production.sh
 ```
 
-The script will ask you for an e-mail address, it will ask you to agree to the Lets Ecnrypt Terms of Service and ask you to agree to shared your e-mail address with the Electronic Frontier Foundation. If it all goes well, it will output the following indicating success:
+The script asks you to agree to the Lets Encrypt Terms of Service and for an e-mail address for expiry notices, then runs certbot non-interactively. If it all goes well, it will output the following indicating success:
 
 ```
 ....
