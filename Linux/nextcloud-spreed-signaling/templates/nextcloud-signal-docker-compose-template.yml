@@ -1,7 +1,6 @@
 
 networks:
   spreed:
-    external: true
 
 services:
 
@@ -11,15 +10,19 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/New_York
+      - TZ=${TIMEZONE}
     volumes:
       - ./nginx/conf:/config
       - ./certbot/conf/:/etc/nginx/ssl/:ro
     networks:
       - spreed
     ports:
-      - 80:80
-      - 443:443
+      - "${BIND_IP}:80:80"
+      - "${BIND_IP}:443:443"
+    logging:
+      options:
+        max-size: 10m
+        max-file: "5"
     restart: unless-stopped
     depends_on:
       - spreedbackend
@@ -49,16 +52,14 @@ services:
       - nginx
 
   spreedbackend:
-    build:
-      context: .
-      dockerfile: docker/server/Dockerfile
+    # Prebuilt multi-arch image (linux/amd64 + linux/arm64). No Go toolchain
+    # needed. CONFIG=/config/server.conf is the image default, so mounting
+    # server.conf is all that is required.
+    image: strukturag/nextcloud-spreed-signaling:2.1.1
     volumes:
-      - ./server.conf:/config/server.conf
-    #network_mode: host
+      - ./server.conf:/config/server.conf:ro
     networks:
       - spreed
-    #ports:
-      #- 8080:8080
     container_name: nextcloud_spreed_backend
     logging:
       options:
@@ -70,11 +71,10 @@ services:
       - coturn
 
   nats:
-    image: nats:2.10
+    image: nats:2.12
     volumes:
-      - ./gnatsd.conf:/config/gnatsd.conf
+      - ./gnatsd.conf:/config/gnatsd.conf:ro
     command: ["-c", "/config/gnatsd.conf"]
-    #network_mode: host
     networks:
       - spreed
     container_name: nextcloud_spreed_nats
@@ -84,11 +84,22 @@ services:
     restart: unless-stopped
 
   janus:
+    # Built from the cloned repo (Janus 1.3.0). There is no published Janus 1.x
+    # image from upstream, and the signaling server needs >= 1.0.0 for
+    # multistream, which Nextcloud Talk 15+ requires.
     build: docker/janus
-    command: ["janus", "--full-trickle"]
-    #network_mode: host
+    command:
+      - "janus"
+      - "--full-trickle"
+      # Without this Janus advertises only its container IP (172.x.y.z), which
+      # no remote client can reach, and calls fail or drop unpredictably.
+      - "--nat-1-1=${PUBLIC_IP}"
+      # Bounded RTP/RTCP range so it can be published. Must match ports below.
+      - "--rtp-port-range=${JANUS_RTP_MIN}-${JANUS_RTP_MAX}"
     networks:
       - spreed
+    ports:
+      - "${BIND_IP}:${JANUS_RTP_MIN}-${JANUS_RTP_MAX}:${JANUS_RTP_MIN}-${JANUS_RTP_MAX}/udp"
     container_name: nextcloud_spreed_janus
     logging:
       options:
@@ -96,17 +107,21 @@ services:
     restart: unless-stopped
 
   coturn:
-    image: coturn/coturn:latest
-    #network_mode: host
+    image: coturn/coturn:4.7
     networks:
       - spreed
     ports:
-      - "3478:3478/tcp"
-      - "3478:3478/udp"
+      - "${BIND_IP}:3478:3478/tcp"
+      - "${BIND_IP}:3478:3478/udp"
+      # TLS/DTLS listener. coturn's --tls-listening-port defaults to 5349, so
+      # this is the port that "turns:" URLs must use.
+      - "${BIND_IP}:5349:5349/tcp"
+      - "${BIND_IP}:5349:5349/udp"
+      - "${BIND_IP}:${TURN_RELAY_MIN}-${TURN_RELAY_MAX}:${TURN_RELAY_MIN}-${TURN_RELAY_MAX}/udp"
     container_name: nextcloud_spreed_coturn
     volumes:
-      - ./coturn/fullchain.pem:/etc/coturn/fullchain.pem
-      - ./coturn/privkey.pem:/etc/coturn/privkey.pem:rw
+      - ./coturn/fullchain.pem:/etc/coturn/fullchain.pem:ro
+      - ./coturn/privkey.pem:/etc/coturn/privkey.pem:ro
     logging:
       options:
         max-size: 10m
@@ -127,6 +142,23 @@ services:
       - "/etc/coturn/fullchain.pem"
       - "--pkey"
       - "/etc/coturn/privkey.pem"
+      # Relay address handed to clients. Without this coturn advertises its
+      # container IP and every relayed candidate is unreachable.
+      - "--external-ip=${PUBLIC_IP}"
+      # Bounded relay range so it can be published. Docker publishes these as
+      # an identity mapping, which is what coturn requires.
+      - "--min-port=${TURN_RELAY_MIN}"
+      - "--max-port=${TURN_RELAY_MAX}"
+      # Stop authenticated clients from using the relay to reach private
+      # networks and link-local metadata services reachable from this host.
+      - "--denied-peer-ip=0.0.0.0-0.255.255.255"
+      - "--denied-peer-ip=10.0.0.0-10.255.255.255"
+      - "--denied-peer-ip=100.64.0.0-100.127.255.255"
+      - "--denied-peer-ip=127.0.0.0-127.255.255.255"
+      - "--denied-peer-ip=169.254.0.0-169.254.255.255"
+      - "--denied-peer-ip=172.16.0.0-172.31.255.255"
+      - "--denied-peer-ip=192.168.0.0-192.168.255.255"
+      - "--denied-peer-ip=::1"
+      - "--denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+      - "--denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
     restart: unless-stopped
-
-

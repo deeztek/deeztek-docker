@@ -1,20 +1,34 @@
-#!/bin/bash
+#!/bin/sh
+#
+# Run by ofelia inside the docker:cli image, which is Alpine and has no bash.
+# Keep this POSIX sh.
+
+BASE=/opt/nextcloud-spreed-signaling
 
 #Attempt Renewal
 echo 'Attempting renewal'
 
-RENEWAL=`docker run --rm --name certbot -v /opt/nextcloud-spreed-signaling/nginx/www:/var/www/certbot -v /opt/nextcloud-spreed-signaling/certbot/conf/:/etc/letsencrypt -v /opt/nextcloud-spreed-signaling/certbot/logs:/var/log/letsencrypt -v /opt/nextcloud-spreed-signaling/coturn:/coturn certbot/certbot:latest renew --webroot --webroot-path /var/www/certbot/`
+RENEWAL=`docker run --rm --name certbot \
+  -v $BASE/nginx/conf/www:/var/www/certbot \
+  -v $BASE/certbot/conf/:/etc/letsencrypt \
+  -v $BASE/certbot/logs:/var/log/letsencrypt \
+  certbot/certbot:latest renew --webroot --webroot-path /var/www/certbot/`
 
-if [[ $RENEWAL == *"Congratulations"* ]]; then
+echo "$RENEWAL"
+
+if echo "$RENEWAL" | grep -q 'Congratulations'; then
 
 echo 'Certificate was renewed. Copying Certificates and Restarting Containers'
 
 #Copy certificate and private key to coturn
-cp /opt/nextcloud-spreed-signaling/certbot/conf/live/SIGNALHOSTNAME.SIGNALDOMAIN/fullchain.pem /opt/nextcloud-spreed-signaling/coturn/fullchain.pem && \
-cp /opt/nextcloud-spreed-signaling/certbot/conf/live/SIGNALHOSTNAME.SIGNALDOMAIN/privkey.pem /opt/nextcloud-spreed-signaling/coturn/privkey.pem && \
+cp $BASE/certbot/conf/live/SIGNALHOSTNAME.SIGNALDOMAIN/fullchain.pem $BASE/coturn/fullchain.pem && \
+cp $BASE/certbot/conf/live/SIGNALHOSTNAME.SIGNALDOMAIN/privkey.pem $BASE/coturn/privkey.pem && \
 
-#Set certificate and key permissions
-chmod 0644 -R /opt/nextcloud-spreed-signaling/coturn/ && \
+#Set certificate and key permissions. 0755 on the directory so the coturn
+#container can traverse it, 0644 on the files themselves. A recursive 0644
+#would strip +x from the directory.
+chmod 0755 $BASE/coturn && \
+chmod 0644 $BASE/coturn/fullchain.pem $BASE/coturn/privkey.pem && \
 
 #Restart Containers
 docker container restart nextcloud_spreed_nginx && \

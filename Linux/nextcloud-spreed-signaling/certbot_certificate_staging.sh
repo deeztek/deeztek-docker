@@ -5,7 +5,7 @@ RED=`tput setaf 1`
 GREEN=`tput setaf 2`
 RESET=`tput sgr0`
 
-#The script below assumes you have a fully installed and updated Ubuntu 18.04 server and you have installed docker and docker-compose
+BASE=/opt/nextcloud-spreed-signaling
 
 #Ensure Script is run as root and if not exit
 if [ `id -u` -ne 0 ]; then
@@ -13,9 +13,15 @@ if [ `id -u` -ne 0 ]; then
       exit 1
    fi
 
-#Check if /usr/bin/docker exists and if not exit
-if [ ! -f "/usr/bin/docker" ]; then
+#Check if docker exists and if not exit
+if ! command -v docker > /dev/null 2>&1; then
       echo "${RED}Docker does not seem to be installed. Please install Docker and try again. Exiting for now... ${RESET}"
+      exit 1
+   fi
+
+#Check the installation directory exists
+if [ ! -d "$BASE" ]; then
+      echo "${RED}$BASE does not exist. Run install_nextcloud_signal.sh first. Exiting... ${RESET}"
       exit 1
    fi
 
@@ -31,7 +37,7 @@ do
         "Yes")
             echo "Starting Certbot Certificate Staging"
 
-          
+
           break
             ;;
         "No")
@@ -61,7 +67,7 @@ read -p "Enter the Nextcloud-Signal Domain you wish to use (Example: domain.tld)
 
 if [ -z "$SIGNAL_DOMAIN" ]
 then
-   
+
       echo "${RED}Nextcloud-Signal Domain cannot be empty ${RESET}"
       exit
 fi
@@ -69,4 +75,18 @@ fi
 #Export the variable
 export SIGNAL_DOMAIN
 
-docker run --rm --name certbot -v ./nginx/www:/var/www/certbot -v ./certbot/conf/:/etc/letsencrypt -v ./coturn:/coturn certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN
+#The webroot must be the directory nginx serves as /config/www, which is
+#$BASE/nginx/conf/www on the host. Paths must be absolute for docker run.
+docker run --rm --name certbot \
+  -v $BASE/nginx/conf/www:/var/www/certbot \
+  -v $BASE/certbot/conf/:/etc/letsencrypt \
+  -v $BASE/certbot/logs:/var/log/letsencrypt \
+  certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN
+
+ERR=$?
+if [ $ERR != 0 ]; then
+echo "${RED}Error $ERR, occurred during the Lets Encrypt staging dry run ${RESET}"
+exit 1
+else
+echo "${GREEN}Done ${RESET}"
+fi
