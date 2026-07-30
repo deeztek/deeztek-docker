@@ -1,11 +1,15 @@
 #!/bin/bash
 
-#Set Font Colors
-RED=`tput setaf 1`
-GREEN=`tput setaf 2`
-RESET=`tput sgr0`
-
 BASE=/opt/nextcloud-spreed-signaling
+
+#Resolve this script's own directory so it can be run from any working directory
+SCRIPTPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+#Shared helpers: banner, set_colours
+source "$SCRIPTPATH/common.sh"
+
+#Set Font Colors
+set_colours
 
 #Ensure Script is run as root and if not exit
 if [ `id -u` -ne 0 ]; then
@@ -27,7 +31,7 @@ if [ ! -d "$BASE" ]; then
 
 
 #GET INPUTS
-echo "Certbot Certificate Staging" | boxes -d stone -p a2v1
+echo "Certbot Certificate Staging" | banner
 
 PS3='Ensure that both ports 80/TCP and 443/TCP are Internet accessible and the Signal FQDN you are going to use is pointing to the public IP address of this machine. Do you wish to continue?: '
 options=("Yes" "No")

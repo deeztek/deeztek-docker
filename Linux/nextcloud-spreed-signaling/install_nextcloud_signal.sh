@@ -1,16 +1,22 @@
 #!/bin/bash
 
+#Resolve this script's own directory so it can be run from any working
+#directory. Templates, spinner.sh and common.sh are read relative to it, and
+#the install log is written into it.
+SCRIPTPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+#Shared helpers: banner, set_colours, check_prereq, detect_pkg_manager
+source "$SCRIPTPATH/common.sh"
+
 #Set Font Colors
-RED=`tput setaf 1`
-GREEN=`tput setaf 2`
-RESET=`tput sgr0`
+set_colours
 
 #The script below assumes a fully installed and updated Linux server with the
 #docker engine and the docker compose plugin already installed.
 #
-#The prerequisites below (boxes, git, curl, openssl) are used if already
-#present and installed automatically where apt-get is available. On any other
-#system, install them first and the script will pick them up.
+#The prerequisites below (git, curl, openssl) are used if already present and
+#installed automatically where a supported package manager is found. On any
+#other system, install them first and the script will pick them up.
 
 #Ensure Script is run as root and if not exit
 if [ `id -u` -ne 0 ]; then
@@ -34,54 +40,12 @@ else
 exit 1
 fi
 
-#Tracks whether "apt-get update" has already been run this session
-APT_UPDATED=0
-
-#check_prereq <command> <package name providing it>
-#Uses the command if already present, installs it with apt-get if not, and
-#exits with a clear message if neither is possible.
-check_prereq() {
-  PREREQ_CMD=$1
-  PREREQ_PKG=$2
-
-  if command -v $PREREQ_CMD > /dev/null 2>&1; then
-     echo "${GREEN}$PREREQ_CMD Exists! Proceeding... ${RESET}"
-     return 0
-  fi
-
-  if ! command -v apt-get > /dev/null 2>&1; then
-     echo "${RED}$PREREQ_CMD is required but is not installed, and apt-get is not available to install it. Please install the $PREREQ_PKG package with your distribution's package manager and run this script again. Exiting... ${RESET}"
-     exit 1
-  fi
-
-  if [ $APT_UPDATED -eq 0 ]; then
-     echo "Updating Package Lists"
-     apt-get update > /dev/null 2>&1
-     APT_UPDATED=1
-  fi
-
-  echo "Installing $PREREQ_PKG Prerequisite"
-  apt-get install $PREREQ_PKG -y > /dev/null 2>&1
-
-  if ! command -v $PREREQ_CMD > /dev/null 2>&1; then
-     echo "${RED}Failed to install $PREREQ_PKG. Exiting... ${RESET}"
-     exit 1
-  fi
-
-  echo "${GREEN}Done ${RESET}"
-}
-
-#boxes formats the banner output, git clones the upstream repo (for the Janus
-#image and gnatsd.conf), curl auto-detects the public IP, openssl generates the
-#secrets and self signed certificates.
-check_prereq boxes boxes
+#git clones the upstream repo (for the Janus image and gnatsd.conf), curl
+#auto-detects the public IP, openssl generates the secrets and self signed
+#certificates. All three are named identically on every supported distribution.
 check_prereq git git
 check_prereq curl curl
 check_prereq openssl openssl
-
-
-#Set the script path
-SCRIPTPATH=$(pwd)
 
 #Upstream release to check out. Must match the image tag used for the
 #spreedbackend service in templates/nextcloud-signal-docker-compose-template.yml
@@ -95,7 +59,7 @@ TIMESTAMP=`date +%m-%d-%Y-%H%M`
 export TIMESTAMP
 
 #GET INPUTS
-echo "Nextcloud-Signal Installation" | boxes -d stone -p a2v1
+echo "Nextcloud-Signal Installation" | banner
 
 PS3='Do you wish to continue the installation of Nextcloud-Signal?: '
 options=("Yes" "No")
@@ -103,9 +67,9 @@ select opt in "${options[@]}"
 do
     case $opt in
         "Yes")
-            echo "[`date +%m/%d/%Y-%H:%M`] Starting Nextcloud-Signal Installation." >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1  | boxes -d stone -p a2v1
+            echo "[`date +%m/%d/%Y-%H:%M`] Starting Nextcloud-Signal Installation." >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-            echo "Starting Nextcloud-Signal Installation. View progress at $SCRIPTPATH/install_log-$TIMESTAMP.log" | boxes -d stone -p a2v1
+            echo "Starting Nextcloud-Signal Installation. View progress at $SCRIPTPATH/install_log-$TIMESTAMP.log" | banner
 
           break
             ;;
@@ -206,10 +170,24 @@ do
                   BIND_IP=$PUBLIC_IP
             fi
 
-            #Verify the chosen bind address actually exists on this host
-            if ! ip -o addr show | grep -qw "$BIND_IP"; then
-                  echo "${RED}$BIND_IP is not configured on any interface of this host. Exiting... ${RESET}"
-                  exit 1
+            #Verify the chosen bind address actually exists on this host. The
+            #package providing "ip" is named iproute2 or iproute depending on
+            #the distribution, so this is a soft check: warn and continue if
+            #neither ip nor hostname is available to verify with.
+            HOST_ADDRS=""
+            if command -v ip > /dev/null 2>&1; then
+                  HOST_ADDRS=`ip -o addr show 2>/dev/null`
+            elif command -v hostname > /dev/null 2>&1; then
+                  HOST_ADDRS=`hostname -I 2>/dev/null`
+            fi
+
+            if [ -n "$HOST_ADDRS" ]; then
+                  if ! echo "$HOST_ADDRS" | grep -qw "$BIND_IP"; then
+                        echo "${RED}$BIND_IP is not configured on any interface of this host. Exiting... ${RESET}"
+                        exit 1
+                  fi
+            else
+                  echo "${RED}Warning: could not verify $BIND_IP is configured on this host (no ip or hostname command). Continuing anyway. ${RESET}"
             fi
 
             BIND_SPECIFIC=1
@@ -404,7 +382,7 @@ stop_spinner $?
 
 echo "[`date +%m/%d/%Y-%H:%M`] Static Secret is: $STATIC_SECRET" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-echo "Static Secret is:${GREEN} $STATIC_SECRET ${RESET}" | boxes -d stone -p a2v1
+echo "Static Secret is:${GREEN} $STATIC_SECRET ${RESET}" | banner
 
 
 echo "[`date +%m/%d/%Y-%H:%M`] Generating Hash Key Random String" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
@@ -439,7 +417,7 @@ stop_spinner $?
 
 echo "[`date +%m/%d/%Y-%H:%M`] Shared Secret is: $SHARED_SECRET" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-echo "Shared Secret is:${GREEN} $SHARED_SECRET ${RESET}" | boxes -d stone -p a2v1
+echo "Shared Secret is:${GREEN} $SHARED_SECRET ${RESET}" | banner
 
 echo "[`date +%m/%d/%Y-%H:%M`] Generating Api Key Random String" >> $SCRIPTPATH/install_log-$TIMESTAMP.log
 
@@ -675,7 +653,7 @@ cd /opt/nextcloud-spreed-signaling && docker compose up -d >> $SCRIPTPATH/instal
 stop_spinner $?
 
 
-echo "FINISHED INSTALLATION. ENSURE ALL CONTAINERS ARE UP AND RUNNING" | boxes -d stone -p a2v1
+echo "FINISHED INSTALLATION. ENSURE ALL CONTAINERS ARE UP AND RUNNING" | banner
 
 echo "[`date +%m/%d/%Y-%H:%M`] FINISHED INSTALLATION. ENSURE ALL CONTAINERS ARE UP AND RUNNING" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
@@ -697,6 +675,6 @@ Open these ports on your firewall:
   49160-49200/udp                     (Coturn relay)
 
 $PUBLIC_IP is advertised to clients in ICE candidates and TURN relay addresses.
-$BIND_DESCRIPTION" | boxes -d stone -p a2v1
+$BIND_DESCRIPTION" | banner
 
 

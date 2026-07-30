@@ -1,14 +1,17 @@
 #!/bin/bash
 
-#Set Font Colors
-RED=`tput setaf 1`
-GREEN=`tput setaf 2`
-RESET=`tput sgr0`
-
 BASE=/opt/nextcloud-spreed-signaling
 
-#Set the script path
-SCRIPTPATH=$(pwd)
+#Resolve this script's own directory so it can be run from any working
+#directory. common.sh and spinner.sh are read relative to it, and the upgrade
+#log is written into it.
+SCRIPTPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+#Shared helpers: banner, set_colours
+source "$SCRIPTPATH/common.sh"
+
+#Set Font Colors
+set_colours
 
 #Set upgrade_log Date/Time Stamp
 TIMESTAMP=`date +%m-%d-%Y-%H%M`
@@ -39,7 +42,7 @@ if [ ! -d "$BASE" ]; then
 
 source "$SCRIPTPATH/spinner.sh"
 
-echo "Nextcloud-Signal Upgrade" | boxes -d stone -p a2v1
+echo "Nextcloud-Signal Upgrade" | banner
 
 #=== GET USER INPUTS STARTS HERE ===
 
@@ -59,7 +62,7 @@ fi
 
 #=== GET USER INPUTS ENDS HERE ===
 
-echo "[`date +%m/%d/%Y-%H:%M`] Starting upgrade to $SIGNAL_VERSION. View progress at $SCRIPTPATH/upgrade_log-$TIMESTAMP.log" | boxes -d stone -p a2v1
+echo "[`date +%m/%d/%Y-%H:%M`] Starting upgrade to $SIGNAL_VERSION. View progress at $SCRIPTPATH/upgrade_log-$TIMESTAMP.log" | banner
 
 echo "[`date +%m/%d/%Y-%H:%M`] Stopping Nextcloud-Signal Docker Containers" >> $SCRIPTPATH/upgrade_log-$TIMESTAMP.log 2>&1
 
@@ -121,6 +124,6 @@ cd $BASE && docker compose up -d >> $SCRIPTPATH/upgrade_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-echo "FINISHED UPGRADE TO $SIGNAL_VERSION. ENSURE ALL CONTAINERS ARE UP AND RUNNING" | boxes -d stone -p a2v1
+echo "FINISHED UPGRADE TO $SIGNAL_VERSION. ENSURE ALL CONTAINERS ARE UP AND RUNNING" | banner
 
 echo "[`date +%m/%d/%Y-%H:%M`] FINISHED UPGRADE TO $SIGNAL_VERSION" >> $SCRIPTPATH/upgrade_log-$TIMESTAMP.log 2>&1
