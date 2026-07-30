@@ -38,6 +38,19 @@ The following ports must be open. The two UDP ranges are required for media to f
 
 The UDP ranges are configurable in `/opt/nextcloud-spreed-signaling/.env` via `JANUS_RTP_MIN`/`JANUS_RTP_MAX` and `TURN_RELAY_MIN`/`TURN_RELAY_MAX`. Roughly one port is used per media stream, so ~100 ports covers a small deployment.
 
+## DNS
+
+The Nextcloud-Signal FQDN must resolve to this server before you run the installation, because the Let's Encrypt http-01 challenge connects to whatever DNS returns.
+
+If you bound published ports to a specific IP (see **Bind IP address** above), the FQDN must resolve to **that exact address**. Ports listen only on the bound address, so if DNS points at any other IP on the host, nothing is listening and certificate issuance fails. Verify both before requesting a certificate:
+
+```
+dig +short signal.domain.tld
+ss -lntp | grep ':80'
+```
+
+The address returned by `dig` and the address in the `ss` output must match.
+
 ## Installation
 
 Clone the deeztek-docker repository with git:
