@@ -8,9 +8,9 @@ Original Credit and Inspiration: [MARKUS WEINGÄRTNER](https://markus-blog.de/in
 
 ## General Requirements
 
-Spreed standalone signaling server requires a fully updated Debian or Ubuntu machine with the Docker engine and the **docker compose plugin** (not the legacy `docker-compose` binary) installed, as well as a fully functioning Nextcloud installation.
+Spreed standalone signaling server requires a fully updated Linux machine with the Docker engine and the **docker compose plugin** (not the legacy `docker-compose` binary) installed, as well as a fully functioning Nextcloud installation.
 
-Prerequisites are installed with `apt-get`, so a Debian-family distribution is required.
+The installation script also needs `boxes`, `git`, `curl` and `openssl`. It uses them if they are already present, and installs them automatically where `apt-get` is available. On any other system, install them with your own package manager first and the script will pick them up.
 
 
 ## Prerequisites

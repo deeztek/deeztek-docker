@@ -8,9 +8,9 @@ RESET=`tput sgr0`
 #The script below assumes a fully installed and updated Linux server with the
 #docker engine and the docker compose plugin already installed.
 #
-#The prerequisites below (boxes, git, curl, openssl) are installed
-#automatically with apt-get on Debian and Ubuntu. On other distributions,
-#install them with your own package manager first and the script will use them.
+#The prerequisites below (boxes, git, curl, openssl) are used if already
+#present and installed automatically where apt-get is available. On any other
+#system, install them first and the script will pick them up.
 
 #Ensure Script is run as root and if not exit
 if [ `id -u` -ne 0 ]; then
@@ -30,14 +30,14 @@ fi
 if docker compose version > /dev/null 2>&1; then
   echo "${GREEN}Docker Compose Exists! Proceeding... ${RESET}"
 else
-   echo "${RED}The docker compose plugin does not seem to be installed. Please run ubuntu_install_docker_compose.sh and try again. Exiting for now... ${RESET}"
+   echo "${RED}The docker compose plugin does not seem to be installed. Install it, or run Linux/docker/ubuntu_install_docker_compose.sh from this repository, and try again. Exiting for now... ${RESET}"
 exit 1
 fi
 
 #Tracks whether "apt-get update" has already been run this session
 APT_UPDATED=0
 
-#check_prereq <command> <debian package providing it>
+#check_prereq <command> <package name providing it>
 #Uses the command if already present, installs it with apt-get if not, and
 #exits with a clear message if neither is possible.
 check_prereq() {
