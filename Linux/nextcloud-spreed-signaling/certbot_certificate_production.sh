@@ -56,28 +56,16 @@ done
 
 #=== GET USER INPUTS STARTS HERE ===
 
-read -p "Enter the Nextcloud-Signal Hostname you wish to use (Example: signal):"  SIGNAL_HOSTNAME
+read -p "Enter the full Nextcloud-Signal FQDN you wish to use (Example: signal.domain.tld):"  SIGNAL_FQDN
 
-if [ -z "$SIGNAL_HOSTNAME" ]
+if [ -z "$SIGNAL_FQDN" ]
 then
-      echo "${RED}Nextcloud-Signal Hostname cannot be empty ${RESET}"
+      echo "${RED}Nextcloud-Signal FQDN cannot be empty ${RESET}"
       exit
 fi
 
 #Export the variable
-export SIGNAL_HOSTNAME
-
-read -p "Enter the Nextcloud-Signal Domain you wish to use (Example: domain.tld):"  SIGNAL_DOMAIN
-
-if [ -z "$SIGNAL_DOMAIN" ]
-then
-
-      echo "${RED}Nextcloud-Signal Domain cannot be empty ${RESET}"
-      exit
-fi
-
-#Export the variable
-export SIGNAL_DOMAIN
+export SIGNAL_FQDN
 
 echo "Requesting Certbot Certificate Production"
 
@@ -87,7 +75,7 @@ docker run --rm --name certbot \
   -v $BASE/nginx/conf/www:/var/www/certbot \
   -v $BASE/certbot/conf/:/etc/letsencrypt \
   -v $BASE/certbot/logs:/var/log/letsencrypt \
-  certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ -d $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN
+  certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ -d $SIGNAL_FQDN
 
 ERR=$?
 if [ $ERR != 0 ]; then
@@ -114,8 +102,8 @@ fi
 echo "Re-configuring Coturn for Certbot Certificate Production and Restarting Coturn Container"
 
 #Copy certificate and private key to coturn
-cp $BASE/certbot/conf/live/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/fullchain.pem $BASE/coturn/fullchain.pem && \
-cp $BASE/certbot/conf/live/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/privkey.pem $BASE/coturn/privkey.pem && \
+cp $BASE/certbot/conf/live/$SIGNAL_FQDN/fullchain.pem $BASE/coturn/fullchain.pem && \
+cp $BASE/certbot/conf/live/$SIGNAL_FQDN/privkey.pem $BASE/coturn/privkey.pem && \
 
 #Set certificate and key permissions. 0755 on the directory so the coturn
 #container can traverse it, 0644 on the files themselves. A recursive 0644

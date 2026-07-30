@@ -85,43 +85,76 @@ done
 
 #=== GET USER INPUTS STARTS HERE ===
 
-read -p "Enter the Nextcloud-Signal Hostname you wish to use (Example: signal):"  SIGNAL_HOSTNAME
+read -p "Enter the full Nextcloud-Signal FQDN you wish to use (Example: signal.domain.tld):"  SIGNAL_FQDN
 
-if [ -z "$SIGNAL_HOSTNAME" ]
+if [ -z "$SIGNAL_FQDN" ]
 then
-      echo "${RED}Nextcloud-Signal Hostname cannot be empty ${RESET}"
+      echo "${RED}Nextcloud-Signal FQDN cannot be empty ${RESET}"
+      exit
+fi
+
+#Require at least host.domain.tld, since this name goes on a certificate
+if ! echo "$SIGNAL_FQDN" | grep -qE '^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$'
+then
+      echo "${RED}\"$SIGNAL_FQDN\" is not a valid FQDN. Enter a fully qualified name such as signal.domain.tld ${RESET}"
       exit
 fi
 
 #Export the variable
-export SIGNAL_HOSTNAME
-
-read -p "Enter the Nextcloud-Signal Domain you wish to use (Example: domain.tld):"  SIGNAL_DOMAIN
-
-if [ -z "$SIGNAL_DOMAIN" ]
-then
-   
-      echo "${RED}Nextcloud-Signal Domain cannot be empty ${RESET}"
-      exit
-fi
-
-#Export the variable
-export SIGNAL_DOMAIN
+export SIGNAL_FQDN
 
 read -p "Enter the Nextcloud instance URL that will be connecting to this server. MUST include https:// (Example: https://cloud.domain.tld):"  NEXTCLOUD_SERVER
 
 if [ -z "$NEXTCLOUD_SERVER" ]
 then
-   
+
       echo "${RED}Nextcloud instance URL cannot be empty ${RESET}"
       exit
+fi
+
+#The signaling server needs a scheme on the backend url. Without one the
+#backend is silently unusable, so offer to add https:// rather than accepting
+#a bare hostname.
+if ! echo "$NEXTCLOUD_SERVER" | grep -qE '^https?://'
+then
+      echo "${RED}\"$NEXTCLOUD_SERVER\" has no http:// or https:// scheme. ${RESET}"
+      read -p "Use https://$NEXTCLOUD_SERVER instead? [Y/n]: " ADD_SCHEME
+      case "$ADD_SCHEME" in
+        [Nn]*)
+              echo "${RED}The Nextcloud instance URL must include a scheme. Exiting... ${RESET}"
+              exit
+              ;;
+        *)
+              NEXTCLOUD_SERVER="https://$NEXTCLOUD_SERVER"
+              echo "${GREEN}Using $NEXTCLOUD_SERVER ${RESET}"
+              ;;
+      esac
 fi
 
 #Export the variable
 export NEXTCLOUD_SERVER
 
-#Auto-detect the public IP address to offer as the default
-DETECTED_IP=`curl -s --max-time 10 https://ifconfig.me 2>/dev/null`
+#Offer the address the signal FQDN resolves to as the default public IP. On a
+#host with several public addresses this is the right one by definition, since
+#it is where clients and Lets Encrypt will connect. An outbound lookup such as
+#ifconfig.me returns whichever address the default route uses, which on a
+#multi-homed host is frequently a different one.
+RESOLVED_IP=`resolve_fqdn "$SIGNAL_FQDN"`
+OUTBOUND_IP=`curl -s --max-time 10 https://ifconfig.me 2>/dev/null`
+
+if [ -n "$RESOLVED_IP" ]; then
+   DETECTED_IP=$RESOLVED_IP
+   echo ""
+   echo "$SIGNAL_FQDN resolves to ${GREEN}$RESOLVED_IP${RESET}"
+   if [ -n "$OUTBOUND_IP" ] && [ "$OUTBOUND_IP" != "$RESOLVED_IP" ]; then
+      echo "This host's outbound address is $OUTBOUND_IP, which is different."
+      echo "The resolved address is normally the correct one to advertise."
+   fi
+else
+   DETECTED_IP=$OUTBOUND_IP
+   echo ""
+   echo "${RED}Warning: $SIGNAL_FQDN does not resolve. Certificate issuance will fail until it does. ${RESET}"
+fi
 
 read -p "Enter the PUBLIC IP address of this server. This is advertised to clients in ICE candidates and TURN relay addresses [${DETECTED_IP}]:"  PUBLIC_IP
 
@@ -268,7 +301,7 @@ sleep 1
 #stop coturn from bringing up its TLS/DTLS listener, so turns: would not work
 #at all until Lets Encrypt ran. certbot_certificate_production.sh and
 #certbot_renew.sh overwrite these with the real certificate.
-openssl req -batch -x509 -newkey rsa:4096 -nodes -subj "/CN=$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN" -keyout /opt/nextcloud-spreed-signaling/coturn/privkey.pem -out /opt/nextcloud-spreed-signaling/coturn/fullchain.pem -sha256 -days 1825 >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+openssl req -batch -x509 -newkey rsa:4096 -nodes -subj "/CN=$SIGNAL_FQDN" -keyout /opt/nextcloud-spreed-signaling/coturn/privkey.pem -out /opt/nextcloud-spreed-signaling/coturn/fullchain.pem -sha256 -days 1825 >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -329,7 +362,7 @@ mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/post >> $SCR
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/renewal-hooks/pre >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/logs >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
 mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
-mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+mkdir -p /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_FQDN >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -339,7 +372,7 @@ start_spinner 'Generating Self Signed Certificate for Nginx...'
 sleep 1
 
 #generate self signed cert for Nginx
-openssl req -batch -x509 -newkey rsa:4096 -nodes -keyout /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/privkey.pem -out /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/fullchain.pem -sha256 -days 1825 >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+openssl req -batch -x509 -newkey rsa:4096 -nodes -keyout /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_FQDN/privkey.pem -out /opt/nextcloud-spreed-signaling/certbot/conf/dummy/$SIGNAL_FQDN/fullchain.pem -sha256 -days 1825 >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
@@ -443,23 +476,15 @@ stop_spinner $?
 
 #=== CONFIGURE /opt/nextcloud-spreed-signaling/.env STARTS HERE ===
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/.env file with Nextcloud-Signal Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/.env file with Nextcloud-Signal FQDN" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-start_spinner 'Configuring .env file with Nextcloud-Signal Hostname...'
+start_spinner 'Configuring .env file with Nextcloud-Signal FQDN...'
 sleep 1
 
-sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALFQDN,${SIGNAL_FQDN},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/.env file with Nextcloud-Signal Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Configuring .env file with Nextcloud-Signal Domain...'
-sleep 1
-
-sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/.env" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-stop_spinner $?
 
 echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/.env file with Static Secret" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
@@ -580,45 +605,29 @@ stop_spinner $?
 
 #=== CONFIGURE /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf STARTS HERE ===
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf file with Nextcloud-Signal Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf file with Nextcloud-Signal FQDN" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-start_spinner 'Configuring Nginx default file with Nextcloud-Signal Hostname...'
+start_spinner 'Configuring Nginx default file with Nextcloud-Signal FQDN...'
 sleep 1
 
-sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALFQDN,${SIGNAL_FQDN},g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf file with Nextcloud-Signal Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Configuring Nginx default file with Nextcloud-Signal Domain...'
-sleep 1
-
-sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-stop_spinner $?
 
 #=== CONFIGURE /opt/nextcloud-spreed-signaling/nginx/conf/nginx/site-confs/default.conf ENDS HERE ===
 
 #=== CONFIGURE /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh STARTS HERE ===
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh file with Nextcloud-Signal Hostname" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh file with Nextcloud-Signal FQDN" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-start_spinner 'Configuring cerbot_renew.sh file with Nextcloud-Signal Hostname...'
+start_spinner 'Configuring cerbot_renew.sh file with Nextcloud-Signal FQDN...'
 sleep 1
 
-sed -i -e "s,SIGNALHOSTNAME,${SIGNAL_HOSTNAME},g" "/opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+sed -i -e "s,SIGNALFQDN,${SIGNAL_FQDN},g" "/opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 
-echo "[`date +%m/%d/%Y-%H:%M`] Configuring /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh file with Nextcloud-Signal Domain" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-start_spinner 'Configuring cerbot_renew.sh file with Nextcloud-Signal Domain...'
-sleep 1
-
-sed -i -e "s,SIGNALDOMAIN,${SIGNAL_DOMAIN},g" "/opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
-
-stop_spinner $?
 
 #=== CONFIGURE /opt/nextcloud-spreed-signaling/scripts/certbot_renew.sh ENDS HERE ===
 
@@ -659,11 +668,11 @@ echo "[`date +%m/%d/%Y-%H:%M`] FINISHED INSTALLATION. ENSURE ALL CONTAINERS ARE 
 
 echo "Configure Nextcloud (Settings --> Administration --> Talk) with:
 
-  STUN server:            $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN:3478
-  TURN server (turns:):   $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN:5349
+  STUN server:            $SIGNAL_FQDN:3478
+  TURN server (turns:):   $SIGNAL_FQDN:5349
   TURN secret:            $STATIC_SECRET
 
-  High-performance backend URL:  https://$SIGNAL_HOSTNAME.$SIGNAL_DOMAIN/standalone-signaling/
+  High-performance backend URL:  https://$SIGNAL_FQDN/standalone-signaling/
   High-performance backend secret: $SHARED_SECRET
 
 Open these ports on your firewall:

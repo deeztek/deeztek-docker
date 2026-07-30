@@ -68,6 +68,31 @@ banner() {
   printf '+%s+\n' "$border"
 }
 
+#=== resolve_fqdn <hostname> ===
+#
+# Echoes the first IPv4 address a hostname resolves to, or nothing.
+#
+# Prefers getent, which uses glibc NSS and is always present. dig and host come
+# from packages named differently per distribution (dnsutils, bind-utils) and
+# are frequently not installed, so they are only fallbacks.
+resolve_fqdn() {
+  local fqdn=$1 ip=""
+
+  if command -v getent > /dev/null 2>&1; then
+     ip=$(getent ahostsv4 "$fqdn" 2>/dev/null | awk '{print $1; exit}')
+  fi
+
+  if [ -z "$ip" ] && command -v dig > /dev/null 2>&1; then
+     ip=$(dig +short A "$fqdn" 2>/dev/null | grep -E '^[0-9]+(\.[0-9]+){3}$' | head -1)
+  fi
+
+  if [ -z "$ip" ] && command -v host > /dev/null 2>&1; then
+     ip=$(host -t A "$fqdn" 2>/dev/null | awk '/has address/ {print $4; exit}')
+  fi
+
+  printf '%s' "$ip"
+}
+
 #=== set_colours ===
 #
 # Sets RED/GREEN/RESET, empty if the output is not a terminal or tput is

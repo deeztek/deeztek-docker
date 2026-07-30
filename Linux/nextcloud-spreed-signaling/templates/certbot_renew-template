@@ -21,8 +21,8 @@ if echo "$RENEWAL" | grep -q 'Congratulations'; then
 echo 'Certificate was renewed. Copying Certificates and Restarting Containers'
 
 #Copy certificate and private key to coturn
-cp $BASE/certbot/conf/live/SIGNALHOSTNAME.SIGNALDOMAIN/fullchain.pem $BASE/coturn/fullchain.pem && \
-cp $BASE/certbot/conf/live/SIGNALHOSTNAME.SIGNALDOMAIN/privkey.pem $BASE/coturn/privkey.pem && \
+cp $BASE/certbot/conf/live/SIGNALFQDN/fullchain.pem $BASE/coturn/fullchain.pem && \
+cp $BASE/certbot/conf/live/SIGNALFQDN/privkey.pem $BASE/coturn/privkey.pem && \
 
 #Set certificate and key permissions. 0755 on the directory so the coturn
 #container can traverse it, 0644 on the files themselves. A recursive 0644

@@ -127,7 +127,7 @@ services:
         max-size: 10m
     command:
       - "--realm"
-      - "${SIGNAL_DOMAIN}"
+      - "${SIGNAL_FQDN}"
       - "--static-auth-secret"
       - "${STATIC_SECRET}"
       - "--no-stdout-log"

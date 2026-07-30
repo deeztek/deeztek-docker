@@ -17,10 +17,9 @@ The installation script also needs `boxes`, `git`, `curl` and `openssl`. It uses
 
 The installation script will prompt you for the following information. Ensure you have the following information available **BEFORE** running the script:
 
-- **Nextcloud-Signal Hostname** This is the hostname you wish to use for Nextcloud-Signal **WITHOUT** the domain (Example: signal). This is used in combination with the Nextcloud-Signal Domain to form the URL of your Nextcloud-Signal instance.
-- **Nextcloud-Signal Domain** This is the domain you wish to use for Nextcloud-Signal (Example: domain.tld). This is used in combination with the Nextcloud-Signal Hostname to form the URL of your Nextcloud-Signal instance (Example: Nextcloud-Signal.domain.tld).
-- **Nextcloud Instance URL** This is the FQDN URL of a Nextcloud server instance that will be connecting to the Nextcloud-Signal server. You **MUST** include http:// or https:// (Example: https://cloud.domain.tld).
-- **Public IP address** The public IP address of this server. This is advertised to clients in ICE candidates and TURN relay addresses. The script attempts to auto-detect it and offers it as the default. If the server is behind 1:1 NAT, enter the public side of the NAT.
+- **Nextcloud-Signal FQDN** The full name you wish to use for Nextcloud-Signal (Example: signal.domain.tld).
+- **Nextcloud Instance URL** This is the FQDN URL of a Nextcloud server instance that will be connecting to the Nextcloud-Signal server. You **MUST** include http:// or https:// (Example: https://cloud.domain.tld). If you omit the scheme the script offers to add `https://` rather than accepting a value the signaling server cannot use.
+- **Public IP address** The public IP address of this server. This is advertised to clients in ICE candidates and TURN relay addresses. The script offers the address the Nextcloud-Signal FQDN resolves to as the default, which on a host with several public addresses is the correct one by definition. If the server is behind 1:1 NAT, enter the public side of the NAT.
 - **Bind IP address** (optional) If the server has multiple public IP addresses, the script can bind all published ports to a single one, so the stack does not claim ports on the others. The script verifies the address is actually configured on an interface before proceeding.
 
 ## Firewall Ports
@@ -104,7 +103,7 @@ Only the Janus image is built from source; everything else uses a prebuilt, vers
 
 The installation script automatically configures a scheduled cron job to renew Lets Encrypt Certificates on a daily basis.
 
-By default, the script will launch Nginx reverse proxy with a self-signed certificate. If you wish to leverage a Lets Encrypt certificate, ensure that BOTH ports 80/TCP and 443/TCP are open to the Internet and the FQDN of your Nextcloud-Signal server which is derived from the **Nextcloud-Signal Hostname** and **Nextcloud-Signal Domain** you specified during the installation of the script point to the public IP of your Nextcloud-Signal instance. 
+By default, the script will launch Nginx reverse proxy with a self-signed certificate. If you wish to leverage a Lets Encrypt certificate, ensure that BOTH ports 80/TCP and 443/TCP are open to the Internet and that the **Nextcloud-Signal FQDN** you specified during installation points to the public IP of your Nextcloud-Signal instance.
 
 Before attempting to get a production Lets Encrypt certificate, you should test with the Lets Encrypt Staging environment first by running the following script:
 

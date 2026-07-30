@@ -56,28 +56,16 @@ done
 
 #=== GET USER INPUTS STARTS HERE ===
 
-read -p "Enter the Nextcloud-Signal Hostname you wish to use (Example: signal):"  SIGNAL_HOSTNAME
+read -p "Enter the full Nextcloud-Signal FQDN you wish to use (Example: signal.domain.tld):"  SIGNAL_FQDN
 
-if [ -z "$SIGNAL_HOSTNAME" ]
+if [ -z "$SIGNAL_FQDN" ]
 then
-      echo "${RED}Nextcloud-Signal Hostname cannot be empty ${RESET}"
+      echo "${RED}Nextcloud-Signal FQDN cannot be empty ${RESET}"
       exit
 fi
 
 #Export the variable
-export SIGNAL_HOSTNAME
-
-read -p "Enter the Nextcloud-Signal Domain you wish to use (Example: domain.tld):"  SIGNAL_DOMAIN
-
-if [ -z "$SIGNAL_DOMAIN" ]
-then
-
-      echo "${RED}Nextcloud-Signal Domain cannot be empty ${RESET}"
-      exit
-fi
-
-#Export the variable
-export SIGNAL_DOMAIN
+export SIGNAL_FQDN
 
 #The webroot must be the directory nginx serves as /config/www, which is
 #$BASE/nginx/conf/www on the host. Paths must be absolute for docker run.
@@ -85,7 +73,7 @@ docker run --rm --name certbot \
   -v $BASE/nginx/conf/www:/var/www/certbot \
   -v $BASE/certbot/conf/:/etc/letsencrypt \
   -v $BASE/certbot/logs:/var/log/letsencrypt \
-  certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d $SIGNAL_HOSTNAME.$SIGNAL_DOMAIN
+  certbot/certbot:latest certonly --webroot --webroot-path /var/www/certbot/ --dry-run -d $SIGNAL_FQDN
 
 ERR=$?
 if [ $ERR != 0 ]; then
