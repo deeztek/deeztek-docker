@@ -176,6 +176,108 @@ To change the binding after installation, edit the `ports:` entries in `/opt/nex
 
 Do not point Janus at the local coturn with `--stun-server`. Coturn is on the same Docker network, so the STUN Binding response returns Janus's own container address; the resulting candidate is discarded and nothing is fixed.
 
+## Troubleshooting
+
+### Calls work, but nothing reaches the signaling server
+
+The symptom is that calls connect and behave normally while the stack sits completely idle: no sessions, nothing in the logs, Janus untouched. Nextcloud Talk falls back to its built-in peer-to-peer signaling whenever it decides not to use an external server, so calls keep working and nothing looks broken.
+
+The first thing to check is what Nextcloud actually tells clients, which is **not** the same as what the admin interface displays. In a browser logged in to Nextcloud, open the developer console and run:
+
+```
+(await (await fetch('/ocs/v2.php/apps/spreed/api/v3/signaling/settings?format=json&_='+Date.now(),
+  {headers:{'OCS-APIRequest':'true'},cache:'no-store'})).json()).ocs.data.signalingMode
+```
+
+`"external"` means clients are being sent here. `"internal"` means they are not, no matter what the admin page shows.
+
+If it reports `internal` while a server is configured, check for a leftover mode override on the Nextcloud host:
+
+```
+occ config:app:get spreed signaling_mode
+```
+
+Any value there wins. Talk checks it **before** it looks at the configured servers and returns immediately if it is set to `internal`, so a correctly configured server is ignored and the admin page still reports the server as reachable. Delete it:
+
+```
+occ config:app:delete spreed signaling_mode
+```
+
+Then reload Talk. Note that no current version of Nextcloud Talk writes this value itself, it is only read and deleted, so it generally arrives through manual configuration, a setup script, or a leftover from the hosted signaling server offering. It is worth checking whenever clients ignore a server that is otherwise configured correctly.
+
+### Is a call actually going through the stack?
+
+```
+docker exec nextcloud_spreed_backend wget -qO- http://127.0.0.1:8080/api/v1/stats
+```
+
+During a call `rooms` and `sessions` should be non-zero and `publishers` should match the number of participants sending media. `sessions` becomes non-zero as soon as Talk loads, so a call is not needed to test whether clients are connecting at all.
+
+Richer counters are available on the metrics endpoint, which is restricted to localhost and so must also be run from inside the container:
+
+```
+docker exec nextcloud_spreed_backend wget -qO- http://127.0.0.1:8080/metrics \
+  | grep -vE '^#|^go_|^process_|^promhttp_'
+```
+
+| Metric | Meaning |
+| --- | --- |
+| `signaling_sessions`, `signaling_rooms` | current sessions and conversations |
+| `signaling_publisher_streams`, `signaling_subscriber_streams` | media streams currently established |
+| `signaling_requests_errors_total` | backend request failures, should stay flat |
+| `signaling_sessions_resume_failed_total` | clients failing to resume after a connection blip |
+
+### Watching a call in the logs
+
+```
+docker compose logs -f --tail 0 spreedbackend | grep -E 'Register|Unregister|room|RTT'
+docker compose logs -f --tail 0 janus | grep -iE 'Creating new handle|ICE|DTLS|WebRTC media is now available'
+docker compose logs -f --tail 0 coturn | grep -E 'username=<[^>]'
+```
+
+`WebRTC media is now available` from Janus is the strongest single indicator: it means DTLS completed and media is flowing for that connection. Each participant connection adds a Janus handle beyond the one created at startup.
+
+For coturn, **no output is the good result**. It means clients reached Janus directly using the public address from `--nat-1-1`. A non-empty `username=<timestamp:...>` means a client fell back to relaying, which works but sends all of that call's media through this server.
+
+Use `--tail 0` or `--since`. Plain `docker compose logs -f` replays the entire buffer from container start, which buries current activity under startup output.
+
+### Media telemetry is not available
+
+The following metrics stay empty in this deployment: `selected_candidate_total`, `ice_state_total`, `dtls_state_total`, `media_bytes_total`, `media_rtt`, `media_jitter`, `media_lost_total`, `slow_link_total`.
+
+They are populated from Janus events, and this setup does not enable the Janus websocket event handler. The signaling server reports this at startup:
+
+```
+Plugin janus.eventhandler.wsevh not found, realtime usage will not be available
+```
+
+Calls are unaffected. What is lost is per-stream quality telemetry, in particular `selected_candidate_total`, which would show whether calls connect directly or through the TURN relay. Enabling it requires mounting a custom `janus.jcfg` with the event handler configured.
+
+### Log messages that look alarming but are not
+
+| Message | Explanation |
+| --- | --- |
+| `ERROR: CONFIG: Empty cli-password ... telnet cli interface is disabled` | coturn reports this as an error, but a disabled admin telnet interface is the safe outcome |
+| `Relay address to use: 172.x.x.x` | the address coturn binds to. `--external-ip` controls what is advertised to clients, not what is bound |
+| coturn sessions with `username=<>` and `rb=20` | a 20 byte STUN Binding request from an internet scanner, not a call |
+| `allocation watchdog determined stale session state` | coturn closing a session that never created a relay allocation, normal for the above |
+| `No GRPC server certificate ... running unencrypted` | only relevant when clustering multiple signaling servers |
+| nginx `active confs have different version dates than the samples` | the shipped `default.conf` differs from the image's sample, which is intended |
+| `Could not upgrade request ... 'websocket' token not found` | a plain HTTP request to `/spreed`, typically a scanner or health check |
+
+### A 404 on the signaling URL is expected
+
+```
+curl https://signal.domain.tld/standalone-signaling/     -> 404
+```
+
+The signaling server registers `/api/v1/welcome`, `/api/v1/room/{token}`, `/metrics`, `/turn/credentials` and `/spreed`. There is no route at `/`, so a 404 there indicates the proxy is working and reaching the backend. Test with the endpoint Nextcloud actually uses:
+
+```
+curl https://signal.domain.tld/standalone-signaling/api/v1/welcome
+{"nextcloud-spreed-signaling":"Welcome","version":"..."}
+```
+
 
 
 
