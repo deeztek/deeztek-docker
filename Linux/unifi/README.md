@@ -6,7 +6,7 @@ Unifi Controller with Traefik support.
 
 *  Git clone Repository
 
-`https://gitlab.deeztek.com/dedwards/docker.git`
+`https://github.com/deeztek/deeztek-docker.git`
 
 *  Adjust variables under **docker/Linux/unifi/.env** file
 

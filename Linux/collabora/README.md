@@ -8,7 +8,7 @@ For more information please visit [https://www.collaboraoffice.com/code/](https:
 
 ## General Requirements
 
-Collabora requires that you have a fully updated Ubuntu 18.04 (also tested successfully on Ubuntu 20.04) machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik](https://gitlab.deeztek.com/dedwards/docker/-/tree/master/Linux%2Ftraefik).
+Collabora requires that you have a fully updated Ubuntu 18.04 (also tested successfully on Ubuntu 20.04) machine with Docker and Docker Compose and an existing Traefik reverse proxy container installed and configured from [https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik](https://github.com/deeztek/deeztek-docker/tree/master/Linux/traefik).
 
 ## Traefik Special Configuration
 
@@ -50,7 +50,7 @@ This will clone the repository and create a docker directory in the directory yo
 Change to the collabora directory:
 
 ```
-cd deezek-docker/Linux/collabora
+cd deeztek-docker/Linux/collabora
 ```
 
 Run the following script as root:

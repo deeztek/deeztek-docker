@@ -7,7 +7,7 @@ Softether VPN Server with Traefik support and automated Lets Encrypt Certificate
 
 *  Git clone Repository
 
-`https://gitlab.deeztek.com/dedwards/docker.git`
+`https://github.com/deeztek/deeztek-docker.git`
 
 
 *  Adjust variables under **docker/Linux/softether/.env** file: Timezone (**TZ**), host (**HOST**), domain (**DOMAIN**), Server Managemennt Password (**SPW**), Hub Management Password (**HPW**) and the IPSec/L2TP Pre-Shared Key (**PSK**).
