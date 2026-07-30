@@ -78,8 +78,9 @@ echo "[`date +%m/%d/%Y-%H:%M`] Checking out $SIGNAL_VERSION" >> $SCRIPTPATH/upgr
 start_spinner "Checking out $SIGNAL_VERSION..."
 sleep 1
 
-#The local server.conf, .env, docker-compose.yml, nginx/, certbot/, coturn/ and
-#scripts/ are all listed in .gitignore, so a checkout does not disturb them.
+#The local server.conf, .env, docker-compose.yml, nginx/, certbot/, coturn/,
+#scripts/ and ofelia/ are listed in .git/info/exclude, which is untracked, so a
+#checkout leaves them alone and cannot conflict with them.
 cd $BASE && git fetch origin --tags >> $SCRIPTPATH/upgrade_log-$TIMESTAMP.log 2>&1 && \
 git checkout $SIGNAL_VERSION >> $SCRIPTPATH/upgrade_log-$TIMESTAMP.log 2>&1
 

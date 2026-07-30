@@ -1,0 +1,20 @@
+# Local deployment files created by install_nextcloud_signal.sh.
+#
+# This is installed as .git/info/exclude rather than as .gitignore. Overwriting
+# the tracked .gitignore left it permanently modified, which meant an upgrade
+# could abort with "Your local changes would be overwritten by checkout" if
+# upstream ever changed that file. .git/info/exclude is not tracked, so it can
+# never conflict with a checkout.
+#
+# Upstream's own .gitignore already covers server.conf and *.pem. Both are
+# repeated here so that protection does not depend on upstream keeping them.
+
+server.conf
+docker-compose.yml
+.env
+
+nginx/
+certbot/
+coturn/
+scripts/
+ofelia/

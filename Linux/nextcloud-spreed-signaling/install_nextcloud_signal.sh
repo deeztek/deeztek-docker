@@ -262,13 +262,18 @@ stop_spinner $?
 
 #=== CREATING FILES STARTS HERE ===
 
-echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/nextcloud-spreed-signaling/.gitignore file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+echo "[`date +%m/%d/%Y-%H:%M`] Creating /opt/nextcloud-spreed-signaling/.git/info/exclude file" >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
-start_spinner 'Creating .gitignore file...'
+start_spinner 'Protecting local configuration from upgrades...'
 sleep 1
 
-#create /opt/nextcloud-spreed-signaling/.gitignore
-cp -r $SCRIPTPATH/templates/.gitignore-template /opt/nextcloud-spreed-signaling/.gitignore >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
+#Exclude the deployed configuration from git so that "git checkout <tag>"
+#during an upgrade leaves it alone. This goes in .git/info/exclude rather than
+#.gitignore: .gitignore is tracked upstream, so overwriting it would leave a
+#permanently modified file and an upgrade would abort whenever upstream
+#changed it.
+mkdir -p /opt/nextcloud-spreed-signaling/.git/info >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1 && \
+cp -r $SCRIPTPATH/templates/git-exclude-template /opt/nextcloud-spreed-signaling/.git/info/exclude >> $SCRIPTPATH/install_log-$TIMESTAMP.log 2>&1
 
 stop_spinner $?
 

@@ -161,7 +161,7 @@ Run the upgrade script as root. It will prompt for the release to upgrade to (se
 sudo bash upgrade_nextcloud_signal.sh
 ```
 
-The script stops the stack, checks out the requested release tag, updates the signaling server image tag in **docker-compose.yml**, rebuilds the Janus image, pulls the new images and brings everything back up. Your local `server.conf`, `.env`, `docker-compose.yml`, `nginx/`, `certbot/`, `coturn/` and `scripts/` are all listed in `.gitignore`, so the checkout does not disturb them.
+The script stops the stack, checks out the requested release tag, updates the signaling server image tag in **docker-compose.yml**, rebuilds the Janus image, pulls the new images and brings everything back up. Your local `server.conf`, `.env`, `docker-compose.yml`, `nginx/`, `certbot/`, `coturn/`, `scripts/` and `ofelia/` are listed in `.git/info/exclude`, so the checkout leaves them alone. That file is deliberately used instead of `.gitignore`, which is tracked upstream: overwriting it would leave a permanently modified file and the checkout would abort whenever upstream changed it.
 
 ## Notes on media connectivity
 
