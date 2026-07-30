@@ -6,6 +6,30 @@ For more information please visit [https://github.com/strukturag/nextcloud-spree
 
 Original Credit and Inspiration: [MARKUS WEINGÄRTNER](https://markus-blog.de/index.php/2020/11/20/how-to-run-nextcloud-talk-high-performance-backend-with-stun-turnserver-on-ubuntu-with-docker-compose/)
 
+## Contents
+
+- [General Requirements](#general-requirements)
+- [Prerequisites](#prerequisites)
+- [Firewall Ports](#firewall-ports)
+- [DNS](#dns)
+- [Installation](#installation)
+- [Let's Encrypt Certificates](#lets-encrypt-certificates)
+- [Connect Nextcloud to Nextcloud-Signal](#connect-nextcloud-to-nextcloud-signal)
+- [Upgrading](#upgrading)
+- [Notes on media connectivity](#notes-on-media-connectivity)
+- [Capacity and sizing](#capacity-and-sizing)
+  - [UDP ports are usually the first limit](#udp-ports-are-usually-the-first-limit)
+  - [Bandwidth](#bandwidth)
+  - [CPU and memory](#cpu-and-memory)
+  - [Measuring instead of estimating](#measuring-instead-of-estimating)
+- [Troubleshooting](#troubleshooting)
+  - [Calls work, but nothing reaches the signaling server](#calls-work-but-nothing-reaches-the-signaling-server)
+  - [Is a call actually going through the stack?](#is-a-call-actually-going-through-the-stack)
+  - [Watching a call in the logs](#watching-a-call-in-the-logs)
+  - [Media telemetry is not available](#media-telemetry-is-not-available)
+  - [Log messages that look alarming but are not](#log-messages-that-look-alarming-but-are-not)
+  - [A 404 on the signaling URL is expected](#a-404-on-the-signaling-url-is-expected)
+
 ## General Requirements
 
 Spreed standalone signaling server requires a fully updated Linux machine with the Docker engine and the **docker compose plugin** (not the legacy `docker-compose` binary) installed, as well as a fully functioning Nextcloud installation.
@@ -175,6 +199,66 @@ On a server with a directly attached public IP, `PUBLIC_IP` and `BIND_IP` are th
 To change the binding after installation, edit the `ports:` entries in `/opt/nextcloud-spreed-signaling/docker-compose.yml` and run `docker compose up -d`.
 
 Do not point Janus at the local coturn with `--stun-server`. Coturn is on the same Docker network, so the STUN Binding response returns Janus's own container address; the resulting candidate is discarded and nothing is fixed.
+
+## Capacity and sizing
+
+Nextcloud publishes a baseline of **4 cores (must support AES), 8 GB RAM, 32 GB disk**, estimated at roughly **150 concurrent users**, and states that a call typically scales to **30-50 active participants** plus hundreds of passive ones, with capacity "limited primarily by bandwidth". See the [requirements](https://portal.nextcloud.com/article/Nextcloud-Talk/High-Performance-Backend/Requirements) and [scalability](https://nextcloud-talk.readthedocs.io/en/latest/scalability/) pages.
+
+The figures below are arithmetic derived from how the stack works, not vendor numbers. They are worst case: real calls sit well under them because simulcast lowers the resolution of smaller tiles.
+
+### UDP ports are usually the first limit
+
+The signaling server creates one Janus subscriber per remote publisher, so an **N** participant call needs **N publisher connections plus N x (N-1) subscriber connections**, which is **N squared** peer connections in total. With BUNDLE and rtcp-mux each peer connection uses a single UDP port from the Janus range, and the range is shared across all concurrent calls.
+
+| Participants in one call | Peer connections (UDP ports) | Worst case egress at 1 Mbps per stream |
+| --- | --- | --- |
+| 5 | 25 | 20 Mbps |
+| 8 | 64 | 56 Mbps |
+| 10 | 100 | 90 Mbps |
+| 15 | 225 | 210 Mbps |
+| 20 | 400 | 380 Mbps |
+| 32 | 1024 | ~1 Gbps |
+
+The default range in `.env` is `JANUS_RTP_MIN=20000` to `JANUS_RTP_MAX=20099`, which is **100 ports** and therefore about a 10 participant call, or several smaller concurrent ones totalling 100 connections. Widen it if you need more:
+
+```
+JANUS_RTP_MIN=20000
+JANUS_RTP_MAX=20511
+```
+
+Then `docker compose up -d` and open the new range on the firewall. Both the `--rtp-port-range` flag and the published ports are derived from these two variables, so they cannot drift apart.
+
+Avoid very large ranges. Docker creates one iptables rule per published port, which makes container startup slow. Beyond roughly 512 ports, `network_mode: host` for the Janus service is the better approach than publishing a thousand mappings.
+
+The coturn relay range (`TURN_RELAY_MIN` to `TURN_RELAY_MAX`, 41 ports by default) limits concurrent **relayed** streams only. TURN is the fallback for clients that cannot reach Janus directly, so this is less pressing, and exhaustion shows up in the coturn logs first.
+
+### Bandwidth
+
+Egress is quadratic in participants: `N x (N-1) x stream bitrate`. Streams are capped at 1 Mbps and screenshares at 2 Mbps, reported at startup:
+
+```
+settings.go:70: Maximum bandwidth 1 Mbps per publishing stream
+settings.go:78: Maximum bandwidth 2 Mbps per screensharing stream
+```
+
+Lowering `MAX_STREAM_BITRATE` is the highest leverage change if bandwidth becomes the constraint, because it scales the whole table linearly.
+
+### CPU and memory
+
+The SFU forwards packets and does not transcode, so load is mostly SRTP encryption and packet forwarding. This is why AES support is called out in the requirements: AES-NI makes a substantial difference. A modern core handles several hundred concurrent streams, so on a machine meeting the baseline the network link is reached long before the CPU.
+
+Memory is modest. One caveat from upstream: if Janus event handlers are enabled and the consumer disconnects, unsent events queue inside Janus and can consume significant memory. Bound it with `events_cap_on_reconnect`. This does not apply unless event handlers are enabled, which they are not by default here.
+
+### Measuring instead of estimating
+
+```
+docker exec nextcloud_spreed_backend wget -qO- http://127.0.0.1:8080/metrics \
+  | grep -E 'publisher_streams|subscriber_streams|sessions|rooms'
+```
+
+The sum of `signaling_publisher_streams` and `signaling_subscriber_streams` is the live peer connection count, to compare against the size of the port range. Multiplying the subscriber count by the stream bitrate gives a worst case egress figure.
+
+Upstream ships a benchmark client for load testing, though it notes that it "might not cover the whole functionality".
 
 ## Troubleshooting
 
