@@ -105,6 +105,8 @@ The installation script automatically configures a scheduled cron job to renew L
 
 By default, the script will launch Nginx reverse proxy with a self-signed certificate. If you wish to leverage a Lets Encrypt certificate, ensure that BOTH ports 80/TCP and 443/TCP are open to the Internet and that the **Nextcloud-Signal FQDN** you specified during installation points to the public IP of your Nextcloud-Signal instance.
 
+Both certificate scripts read the Nextcloud-Signal FQDN from `/opt/nextcloud-spreed-signaling/.env` and ask you to confirm it, rather than having you retype it. They also warn if that name does not appear in the deployed nginx configuration, since a certificate issued under a name nginx is not serving would leave nginx unable to start.
+
 Before attempting to get a production Lets Encrypt certificate, you should test with the Lets Encrypt Staging environment first by running the following script:
 
 ```
