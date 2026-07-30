@@ -1,0 +1,20 @@
+# Normalize all text files to LF in the repository and on checkout.
+# Without this, syncing the working tree through Windows tooling (see
+# syncfiles.bat / FreeFileSync) converts files to CRLF, which makes every
+# file show as modified with no visible content change and renders
+# git diff useless across the repo.
+* text=auto eol=lf
+
+# Windows scripts must keep CRLF to be safe with cmd.exe.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files git should never touch.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.gz binary
+*.zip binary
