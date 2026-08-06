@@ -48,7 +48,8 @@ sudo bash start.sh
 | Install OnlyOffice | `onlyoffice/ubuntu_1804_install_onlyoffice.sh` |
 | Install Collabora | `collabora/ubuntu_install_collabora.sh` |
 | Install Wordpress | `wordpress/ubuntu_install_wordpress.sh` |
-| Install SoftEther VPN | `softether/install_softether.sh` |
+| Install Softether VPN | `softether/install_softether.sh` |
+| Install Nextcloud Talk Signaling Server | `nextcloud-spreed-signaling/install_nextcloud_signal.sh` |
 
 Install Docker first if the host does not already have it.
 
@@ -58,7 +59,6 @@ These have their own installation scripts. Change into the directory and run the
 
 | Directory | Script |
 | --- | --- |
-| `Linux/nextcloud-spreed-signaling` | `install_nextcloud_signal.sh` |
 | `Linux/authentik` | `ubuntu_install_authentik.sh` |
 
 ## Everything else

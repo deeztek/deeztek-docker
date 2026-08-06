@@ -12,7 +12,7 @@ if [ `id -u` -ne 0 ]; then
 while true
 do
 PS3='Please Select Option: '
-options=("Install Docker and Docker Compose" "Install Portainer" "Install Traefik" "Install Guacamole with Local User Authentication" "Install Guacamole with LDAP User Authentication" "Install Zabbix Server" "Install Nextcloud" "Install OnlyOffice" "Install Collabora" "Install Wordpress" "Install Softether VPN" "Exit")
+options=("Install Docker and Docker Compose" "Install Portainer" "Install Traefik" "Install Guacamole with Local User Authentication" "Install Guacamole with LDAP User Authentication" "Install Zabbix Server" "Install Nextcloud" "Install OnlyOffice" "Install Collabora" "Install Wordpress" "Install Softether VPN" "Install Nextcloud Talk Signaling Server" "Exit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -73,10 +73,16 @@ do
             ;;     
 
     "Install Softether VPN")
-            cd softether/ && bash install_softether.sh 
+            cd softether/ && bash install_softether.sh
             cd -
             break
-            ;;    
+            ;;
+
+    "Install Nextcloud Talk Signaling Server")
+            cd nextcloud-spreed-signaling/ && bash install_nextcloud_signal.sh
+            cd -
+            break
+            ;;
 
      
         
