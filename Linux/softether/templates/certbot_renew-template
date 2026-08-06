@@ -1,0 +1,182 @@
+#!/bin/sh
+#
+# Obtain or renew the certificate, and install it into SoftEther if it changed.
+#
+# Installed to /opt/softether/scripts/certbot_renew.sh by install_softether.sh.
+#
+# Run nightly by ofelia inside the docker:cli image (Alpine, no bash), and also
+# directly on the host by the installer -- it only needs docker/sh/grep/timeout,
+# and /opt/softether is bind-mounted at the same absolute path in both cases.
+# Keep this POSIX sh.
+#
+#   certbot_renew.sh              obtain if missing, else renew if due
+#   certbot_renew.sh --force      renew even if not due (costs rate limit)
+#   certbot_renew.sh --dry-run    staging dry run, changes nothing
+set -eu
+
+BASE=/opt/softether
+
+VPN_CONTAINER=softether-vpnserver
+MARKER="$BASE/certbot/conf/.renewed"
+
+DRY_RUN=false
+FORCE=false
+for a in "$@"; do
+    case "$a" in
+        --dry-run) DRY_RUN=true ;;
+        --force)   FORCE=true ;;
+        *) echo "unknown option: $a" >&2; exit 2 ;;
+    esac
+done
+
+[ -f "$BASE/.env" ] || { echo "missing $BASE/.env -- run install_softether.sh" >&2; exit 1; }
+. "$BASE/.env"
+
+: "${VPN_DOMAIN:?VPN_DOMAIN not set in .env}"
+: "${LE_EMAIL:?LE_EMAIL not set in .env}"
+: "${CERTBOT_IMAGE:?CERTBOT_IMAGE not set in .env}"
+CERT_METHOD="${CERT_METHOD:-dns-01}"
+CERT_STAGING="${CERT_STAGING:-false}"
+DNS_PROPAGATION="${DNS_PROPAGATION:-60}"
+LIVE_DIR="$BASE/certbot/conf/live/$VPN_DOMAIN"
+RENEWAL_CONF="$BASE/certbot/conf/renewal/${VPN_DOMAIN}.conf"
+
+# --- build the certbot argument list ---------------------------------------
+set --
+
+if [ -d "$LIVE_DIR" ]; then
+    set -- renew --non-interactive --cert-name "$VPN_DOMAIN"
+    $FORCE && set -- "$@" --force-renewal
+    # Certbot will not move a lineage between ACME servers on its own. If .env
+    # now asks for a different environment than the stored one, force a reissue
+    # so a staging -> production switch actually takes effect.
+    if [ -f "$RENEWAL_CONF" ]; then
+        if grep -q "acme-staging" "$RENEWAL_CONF"; then STORED=staging; else STORED=production; fi
+        WANT=production; [ "$CERT_STAGING" = "true" ] && WANT=staging
+        if [ "$STORED" != "$WANT" ] && [ "$DRY_RUN" = "false" ]; then
+            echo "Existing certificate is from $STORED but .env asks for $WANT; forcing reissue"
+            set -- "$@" --force-renewal
+        fi
+    fi
+else
+    set -- certonly --non-interactive --agree-tos --email "$LE_EMAIL" -d "$VPN_DOMAIN"
+fi
+
+[ "$CERT_STAGING" = "true" ] && set -- "$@" --staging
+$DRY_RUN && set -- "$@" --dry-run
+
+# --- challenge-specific flags and mounts ------------------------------------
+# Extra `docker run` arguments (mounts / ports / env-file) collected separately.
+set_docker_extra() { DOCKER_EXTRA="$*"; }
+DOCKER_EXTRA=""
+
+if [ "$CERT_METHOD" = "http-01" ]; then
+    # No webserver in this stack, so certbot binds :80 itself for the challenge.
+    set -- "$@" --standalone --http-01-port 80
+    set_docker_extra "-p 80:80"
+else
+    P="${DNS_PROVIDER:?DNS_PROVIDER not set in .env}"
+    case "$P" in
+        route53)
+            # Route 53 reads AWS_* from the environment, not a credentials file.
+            set -- "$@" --dns-route53 --dns-route53-propagation-seconds "$DNS_PROPAGATION"
+            set_docker_extra "--env-file $BASE/secrets/route53.env"
+            ;;
+        google)
+            set -- "$@" --dns-google \
+                --dns-google-credentials /run/secrets/google.json \
+                --dns-google-propagation-seconds "$DNS_PROPAGATION"
+            ;;
+        *)
+            set -- "$@" "--dns-$P" \
+                "--dns-$P-credentials" "/run/secrets/$P.ini" \
+                "--dns-$P-propagation-seconds" "$DNS_PROPAGATION"
+            ;;
+    esac
+fi
+
+# certbot runs --deploy-hook through a shell, and only when a certificate was
+# actually obtained or renewed. A marker file is a more reliable signal than
+# grepping certbot's output, whose wording changes between releases.
+rm -f "$MARKER"
+set -- "$@" --deploy-hook "touch /etc/letsencrypt/.renewed"
+
+if $DRY_RUN; then
+    echo "Dry run against the Let's Encrypt staging environment (no rate limit cost)"
+else
+    echo "Requesting/renewing certificate for $VPN_DOMAIN ($CERT_METHOD)"
+fi
+
+# shellcheck disable=SC2086
+docker run --rm --name softether-certbot \
+    -v "$BASE/certbot/conf:/etc/letsencrypt" \
+    -v "$BASE/certbot/lib:/var/lib/letsencrypt" \
+    -v "$BASE/certbot/logs:/var/log/letsencrypt" \
+    -v "$BASE/secrets:/run/secrets:ro" \
+    $DOCKER_EXTRA \
+    "$CERTBOT_IMAGE" "$@"
+
+if $DRY_RUN; then
+    echo "Dry run finished; nothing was changed"
+    exit 0
+fi
+
+if [ ! -f "$MARKER" ]; then
+    echo "Certificate was not renewed"
+    exit 0
+fi
+
+# --- install the certificate into SoftEther ---------------------------------
+#
+# SoftEther does NOT read a PEM off disk at boot: the server certificate lives
+# inside vpn_server.config, so it has to be pushed in with vpncmd.
+#
+# The Flush is not optional. ServerCertSet only changes the in-memory config,
+# which reaches disk on a 300s timer (AutoSaveConfigSpan) or on a clean shutdown.
+# A container restart is never a clean shutdown: vpnserver runs as PID 1 with no
+# SIGTERM handler, so docker always ends up SIGKILLing it (exit 137) and nothing
+# is written. Without Flush the restart throws the new certificate away and the
+# server comes back on the OLD one -- silently, because ServerCertSet still
+# reports success.
+#
+# The paths below are as seen INSIDE the SoftEther container, which mounts
+# ./certbot/conf at /etc/letsencrypt.
+echo "Certificate was renewed. Installing into $VPN_CONTAINER"
+
+ADMIN_PW=""
+if [ -r "$BASE/secrets/se-admin.pw" ]; then
+    ADMIN_PW=$(head -n 1 "$BASE/secrets/se-admin.pw" | tr -d '\r\n')
+fi
+
+# On a bad password vpncmd does not exit -- it re-prompts "Password:" and blocks
+# forever, even with stdin closed. Always wrap it in a timeout.
+se_vpncmd() {
+    _rc=0
+    _out=$(timeout 60 docker exec "$VPN_CONTAINER" /usr/local/bin/vpncmd localhost \
+        /SERVER /PASSWORD:"$ADMIN_PW" /CMD "$@" 2>&1) || _rc=$?
+
+    if [ "$_rc" = "124" ] || echo "$_out" | grep -q "Access has been denied"; then
+        echo "ERROR: vpncmd could not authenticate to $VPN_CONTAINER." >&2
+        echo "       $BASE/secrets/se-admin.pw does not match the admin password" >&2
+        echo "       stored in vpn_server.config (byte HashedPassword)." >&2
+        return 1
+    fi
+    if [ "$_rc" != "0" ] || ! echo "$_out" | grep -q "The command completed successfully"; then
+        echo "$_out" >&2
+        echo "ERROR: vpncmd '$1' failed" >&2
+        return 1
+    fi
+}
+
+se_vpncmd ServerCertSet \
+    "/LOADCERT:/etc/letsencrypt/live/$VPN_DOMAIN/fullchain.pem" \
+    "/LOADKEY:/etc/letsencrypt/live/$VPN_DOMAIN/privkey.pem"
+echo "Certificate installed"
+
+se_vpncmd Flush
+echo "Config flushed to disk"
+
+docker container restart "$VPN_CONTAINER"
+echo "$VPN_CONTAINER restarted"
+
+rm -f "$MARKER"

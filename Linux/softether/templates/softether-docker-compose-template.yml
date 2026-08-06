@@ -1,0 +1,54 @@
+# Installed to /opt/softether/docker-compose.yml by install_softether.sh
+#
+#   vpnserver - SoftEther VPN Server
+#   ofelia    - cron daemon; nightly it launches a docker:cli container that runs
+#               /opt/softether/scripts/certbot_renew.sh (see ofelia/config.ini)
+#
+# There is deliberately no certbot service: the certbot container is created
+# ad-hoc by certbot_renew.sh and exits when it is done.
+#
+# Everything is a bind mount under /opt/softether, at the same absolute path on
+# the host and inside every container. That is what lets ofelia's config.ini and
+# the renew script share paths with no translation.
+#
+# TARGET_PLATFORM comes from .env, which install_softether.sh writes after
+# detecting the host architecture. Compose interpolates it here.
+
+services:
+  vpnserver:
+    image: softethervpn/vpnserver:5.2
+    container_name: softether-vpnserver
+    platform: ${TARGET_PLATFORM:-linux/amd64}
+    restart: unless-stopped
+    # No stop_grace_period override on purpose. `vpnserver execsvc` runs as PID 1
+    # and installs no SIGTERM handler, so every `docker stop`/`restart` waits out
+    # the grace period and then SIGKILLs it (exit 137) -- raising the grace just
+    # makes restarts slower without ever producing a clean shutdown. Unsaved
+    # config is lost either way, which is why certbot_renew.sh calls
+    # `vpncmd Flush` before restarting.
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "443:443/tcp"     # SSL-VPN / SSTP
+      - "992:992/tcp"     # SoftEther legacy
+      - "5555:5555/tcp"   # SoftEther management + VPN
+      - "500:500/udp"     # IPsec IKE
+      - "4500:4500/udp"   # IPsec NAT-T
+      - "1194:1194/udp"   # OpenVPN
+    volumes:
+      # Drop an existing vpn_server.config straight into softether_config/data/
+      - ./softether_config/data:/var/lib/softether
+      - ./softether_config/logs:/var/log/softether
+      # Read-only: only certbot writes here, vpncmd just reads the PEMs.
+      - ./certbot/conf:/etc/letsencrypt:ro
+
+  ofelia:
+    image: mcuadros/ofelia:latest
+    container_name: softether-ofelia
+    platform: ${TARGET_PLATFORM:-linux/amd64}
+    restart: unless-stopped
+    depends_on:
+      - vpnserver
+    volumes:
+      - ./ofelia/config.ini:/etc/ofelia/config.ini:ro
+      - /var/run/docker.sock:/var/run/docker.sock

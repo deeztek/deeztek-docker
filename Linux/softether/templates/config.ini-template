@@ -1,0 +1,18 @@
+; Ofelia scheduler config, installed to /opt/softether/ofelia/config.ini
+;
+; DO NOT EDIT the installed copy -- install_softether.sh regenerates it from this
+; template, substituting __BASE__. Edit this file and re-run the installer.
+;
+; Schedule syntax is robfig/cron with an OPTIONAL leading seconds field, so both
+; "0 17 3 * * *" (6 fields) and "17 3 * * *" (5 fields) work, as do @daily etc.
+; Below: 03:17 nightly. certbot only acts inside the last 30 days of the cert's
+; life, so this is a no-op most nights and renews about once every 60 days.
+
+[job-run "certbot-renew"]
+schedule = 0 17 3 * * *
+command  = __BASE__/scripts/certbot_renew.sh
+image    = docker:cli
+volume   = /var/run/docker.sock:/var/run/docker.sock
+; Mounted at the same path it has on the host, so the paths the script hands to
+; `docker run -v` (which the host daemon resolves) are the paths it can see too.
+volume   = __BASE__:__BASE__
