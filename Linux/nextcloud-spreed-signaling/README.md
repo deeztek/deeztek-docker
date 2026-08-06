@@ -36,7 +36,6 @@ Spreed standalone signaling server requires a fully updated Linux machine with t
 
 The installation script also needs `git`, `curl` and `openssl`. It uses them if they are already present, and otherwise installs them with whichever of `apt-get`, `dnf`, `yum`, `zypper`, `pacman` or `apk` is available. If none is found it tells you what to install and exits.
 
-
 ## Prerequisites
 
 The installation script will prompt you for the following information. Ensure you have the following information available **BEFORE** running the script:
