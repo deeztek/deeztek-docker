@@ -12,7 +12,7 @@ if [ `id -u` -ne 0 ]; then
 while true
 do
 PS3='Please Select Option: '
-options=("Install Docker and Docker Compose" "Install Portainer" "Install Traefik" "Install Guacamole with Local User Authentication" "Install Guacamole with LDAP User Authentication" "Install Zabbix" "Install Nextcloud" "Install OnlyOffice" "Install Collabora" "Install Wordpress" "Exit")
+options=("Install Docker and Docker Compose" "Install Portainer" "Install Traefik" "Install Guacamole with Local User Authentication" "Install Guacamole with LDAP User Authentication" "Install Zabbix Server" "Install Nextcloud" "Install OnlyOffice" "Install Collabora" "Install Wordpress" "Install Softether VPN" "Exit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -70,7 +70,15 @@ do
             cd wordpress/ && bash ubuntu_install_wordpress.sh
             cd -
             break
-            ;;            
+            ;;     
+
+    "Install Softether VPN")
+            cd softether/ && bash install_softether.sh 
+            cd -
+            break
+            ;;    
+
+     
         
         "Exit")
             echo "Exiting...."
