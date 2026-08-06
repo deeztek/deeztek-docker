@@ -182,13 +182,18 @@ else
    DNS_PROPAGATION=0
 fi
 
-#--- staging vs production --------------------------------------------------
-echo ""
-echo "Staging issues untrusted certificates but has generous rate limits. Use it"
-echo "to prove the whole pipeline works before spending production quota."
-choose LE_ENV "Which Let's Encrypt environment for the first certificate?" staging production
+#--- ACME environment -------------------------------------------------------
+#Always production. There is deliberately no prompt: the installer already runs
+#a staging dry run before issuing, which proves the DNS credentials and the
+#whole ACME round trip at no rate limit cost. Actually *issuing* from staging
+#adds nothing beyond that, leaves an untrusted certificate on the VPN server,
+#and creates a staging lineage that certbot will keep renewing from staging
+#until it is explicitly moved.
+#
+#Set CERT_STAGING=true in /opt/softether/.env by hand if you ever genuinely
+#need a real staging certificate; certbot_renew.sh will then move the lineage.
 CERT_STAGING=false
-[ "$LE_ENV" = "staging" ] && CERT_STAGING=true
+LE_ENV=production
 
 #--- SoftEther admin password ----------------------------------------------
 echo ""
@@ -376,8 +381,3 @@ cat <<EOF
 
 EOF
 
-if [ "$CERT_STAGING" = "true" ]; then
-   echo "${RED}This is a STAGING certificate and clients will not trust it."
-   echo "Re-run this script and pick \"production\" when you are ready. ${RESET}"
-   echo ""
-fi

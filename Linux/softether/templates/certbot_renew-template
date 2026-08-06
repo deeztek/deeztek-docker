@@ -44,22 +44,35 @@ RENEWAL_CONF="$BASE/certbot/conf/renewal/${VPN_DOMAIN}.conf"
 # --- build the certbot argument list ---------------------------------------
 set --
 
-if [ -d "$LIVE_DIR" ]; then
+# Does the stored lineage use a different ACME environment than .env asks for?
+SWITCH=false
+if [ -f "$RENEWAL_CONF" ]; then
+    if grep -q "acme-staging" "$RENEWAL_CONF"; then STORED=staging; else STORED=production; fi
+    WANT=production
+    [ "$CERT_STAGING" = "true" ] && WANT=staging
+    if [ "$STORED" != "$WANT" ] && [ "$DRY_RUN" = "false" ]; then
+        SWITCH=true
+    fi
+fi
+
+if [ -d "$LIVE_DIR" ] && [ "$SWITCH" = "false" ]; then
     set -- renew --non-interactive --cert-name "$VPN_DOMAIN"
     $FORCE && set -- "$@" --force-renewal
-    # Certbot will not move a lineage between ACME servers on its own. If .env
-    # now asks for a different environment than the stored one, force a reissue
-    # so a staging -> production switch actually takes effect.
-    if [ -f "$RENEWAL_CONF" ]; then
-        if grep -q "acme-staging" "$RENEWAL_CONF"; then STORED=staging; else STORED=production; fi
-        WANT=production; [ "$CERT_STAGING" = "true" ] && WANT=staging
-        if [ "$STORED" != "$WANT" ] && [ "$DRY_RUN" = "false" ]; then
-            echo "Existing certificate is from $STORED but .env asks for $WANT; forcing reissue"
-            set -- "$@" --force-renewal
-        fi
-    fi
 else
-    set -- certonly --non-interactive --agree-tos --email "$LE_EMAIL" -d "$VPN_DOMAIN"
+    # certonly rather than renew. "certbot renew" reads the ACME server from the
+    # stored renewal config, so --force-renewal alone reissues from whichever
+    # environment the lineage already used: a staging lineage stayed on staging
+    # and quietly produced another untrusted certificate. certonly takes the
+    # server from the flags below, and carries the account details that renew
+    # does not, which matter when the target environment has no account yet.
+    if [ "$SWITCH" = "true" ]; then
+        echo "Existing certificate is from $STORED but .env asks for $WANT; reissuing against $WANT"
+    fi
+    set -- certonly --non-interactive --agree-tos --email "$LE_EMAIL" \
+           --cert-name "$VPN_DOMAIN" -d "$VPN_DOMAIN"
+    if [ "$SWITCH" = "true" ] || $FORCE; then
+        set -- "$@" --force-renewal
+    fi
 fi
 
 [ "$CERT_STAGING" = "true" ] && set -- "$@" --staging
