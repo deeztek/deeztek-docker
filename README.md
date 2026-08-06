@@ -53,13 +53,9 @@ sudo bash start.sh
 
 Install Docker first if the host does not already have it.
 
-## Installers not in the menu
+## Work in progress
 
-These have their own installation scripts. Change into the directory and run the script directly:
-
-| Directory | Script |
-| --- | --- |
-| `Linux/authentik` | `ubuntu_install_authentik.sh` |
+`Linux/authentik` is **incomplete and not currently working**. It contains an installation script and templates, but the script is unfinished and its `README.md` is still a copy of the Zabbix one. Do not run it. It is left in the repository as work in progress rather than as something to deploy.
 
 ## Everything else
 
