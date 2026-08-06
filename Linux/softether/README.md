@@ -181,19 +181,63 @@ anything or touching the VPN server. Run it as often as you like.
 docker logs softether-ofelia            # scheduler history
 ```
 
-Confirm what clients actually get:
+### Checking the certificate the server is actually serving
+
+This is the only check that matters, because the certificate lives inside
+`vpn_server.config` rather than on disk. Certbot's own files can be perfectly
+current while the running server serves something else entirely.
 
 ```bash
-echo | openssl s_client -connect "$VPN_DOMAIN:443" -servername "$VPN_DOMAIN" 2>/dev/null \
+echo | openssl s_client -connect homevpn.example.com:443 -servername homevpn.example.com 2>/dev/null \
   | openssl x509 -noout -subject -issuer -dates
 ```
 
+Before DNS points at the new host, connect to its IP address and keep `-servername`
+set to the real name so SNI still matches:
+
+```bash
+echo | openssl s_client -connect 192.0.2.10:443 -servername homevpn.example.com 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -dates
+```
+
+Read the output as follows:
+
+- **`issuer` contains `(STAGING)`** — a staging certificate, which no client will
+  trust. See [Moving from staging to production](#moving-from-staging-to-production).
+- **`notBefore` is older than the certificate under `certbot/conf/live`** — the
+  server is serving something other than certbot's current certificate, usually
+  after importing a `vpn_server.config`. See
+  [Importing a config rolls the certificate back](#importing-a-config-rolls-the-certificate-back).
+- **`notAfter` is under 30 days away** — the nightly job should already have
+  renewed it. Check `docker logs softether-ofelia`.
+
+Compare against what certbot holds on disk:
+
+```bash
+openssl x509 -noout -subject -issuer -dates \
+  -in /opt/softether/certbot/conf/live/homevpn.example.com/fullchain.pem
+```
+
+When the two agree, renewal is in step and nothing manual is needed.
+
 ### Moving from staging to production
 
-Re-run `install_softether.sh` and pick production. Certbot will not move a lineage
-between ACME servers on its own, so `certbot_renew.sh` compares the stored
-`server` in `/opt/softether/certbot/conf/renewal/<domain>.conf` against `.env` and forces a
-reissue when they differ.
+Installation is always production; there is no prompt. The staging dry run that
+runs before issuing already proves the DNS credentials and the ACME round trip
+at no rate limit cost, so issuing from staging only leaves an untrusted
+certificate on the server and a lineage certbot keeps renewing from staging.
+
+If you have a staging lineage from an earlier install, set `CERT_STAGING=false`
+in `/opt/softether/.env` and run `certbot_renew.sh`. It compares the stored
+`server` in `/opt/softether/certbot/conf/renewal/<domain>.conf` against `.env`
+and, when they differ, reissues with `certonly` rather than `renew`.
+
+That distinction matters. `certbot renew` reads the ACME server from the stored
+renewal config, so `--force-renewal` alone forces a reissue **from the
+environment the lineage already used** — a staging lineage silently produces
+another staging certificate. `certonly` takes the server from the flags, and
+carries the `--agree-tos` and `--email` that `renew` omits, which are needed
+when the target environment has no account registered yet.
 
 ## Migrating an existing SoftEther server
 
@@ -220,10 +264,58 @@ Two things to check after copying a config in:
 
 - **Ports.** Your config's `ListenerList` must line up with the `ports:` block in
   `docker-compose.yml`.
-- **Existing certificate.** Your config arrives with its old `ServerCert`. If you
-  also bring over an existing `certbot/conf`, certbot will find the cert still
-  valid, skip renewal, and therefore not install anything — the old certificate
-  keeps being served. Use `/opt/softether/scripts/certbot_renew.sh --force`.
+- **Certificate.** Covered in full below. Importing a config always rolls the
+  served certificate back, and it does so silently.
+
+### Importing a config rolls the certificate back
+
+The server certificate lives **inside** `vpn_server.config`, which is why this
+tooling pushes certificates in with `vpncmd ServerCertSet` instead of writing a
+PEM to disk. Copying a config in therefore replaces the running certificate with
+whichever one that config was carrying, along with everything else you wanted
+from it.
+
+Nothing warns you, and the nightly job will not rescue it. Certbot only looks at
+its own lineage under `certbot/conf/live`, not at what SoftEther is serving. A
+freshly issued certificate valid for 90 days looks perfectly healthy to certbot,
+so it does nothing for another 60 days, while the older certificate the imported
+config restored may expire well before that.
+
+Push the certificate you already have back in. This costs no rate limit, because
+nothing is reissued:
+
+```bash
+PW=$(head -n1 /opt/softether/secrets/se-admin.pw | tr -d '\r\n')
+
+docker exec softether-vpnserver /usr/local/bin/vpncmd localhost /SERVER /PASSWORD:"$PW" \
+  /CMD ServerCertSet \
+  /LOADCERT:/etc/letsencrypt/live/YOUR.DOMAIN/fullchain.pem \
+  /LOADKEY:/etc/letsencrypt/live/YOUR.DOMAIN/privkey.pem
+
+docker exec softether-vpnserver /usr/local/bin/vpncmd localhost /SERVER /PASSWORD:"$PW" \
+  /CMD Flush
+
+docker container restart softether-vpnserver
+```
+
+That is exactly what `certbot_renew.sh` does after a successful renewal, minus
+the certbot call. The `Flush` is not optional: see
+[Why the install is not just "copy the file and restart"](#why-the-install-is-not-just-copy-the-file-and-restart).
+
+Then confirm what is actually being served. Connect to the host's IP rather than
+the name if DNS has not been cut over yet:
+
+```bash
+echo | openssl s_client -connect 192.0.2.10:443 -servername YOUR.DOMAIN 2>/dev/null \
+  | openssl x509 -noout -issuer -dates
+```
+
+`notBefore` should match the certificate under `certbot/conf/live`. Once the two
+agree, automatic renewal is back in step and no further manual action is needed.
+
+`certbot_renew.sh --force` also works, but it reissues and spends one of the five
+duplicate certificates Let's Encrypt allows per week, so prefer the commands
+above unless the certificate on disk has itself expired.
 
 ### A note on `vpncmd` and wrong passwords
 
