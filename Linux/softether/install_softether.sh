@@ -103,8 +103,15 @@ case "$(uname -m)" in
 esac
 echo ""
 echo "Detected platform: ${GREEN}${DETECTED}${RESET} (uname -m = $(uname -m))"
-choose TARGET_PLATFORM "Which platform should the images run as?" \
-  "$DETECTED" linux/arm64 linux/amd64 linux/arm/v7
+
+#List the detected platform first so it is option 1, then the rest, skipping the
+#detected one so it is not offered twice.
+PLATFORM_OPTS=("$DETECTED")
+for p in linux/arm64 linux/amd64 linux/arm/v7; do
+  [ "$p" = "$DETECTED" ] || PLATFORM_OPTS+=("$p")
+done
+
+choose TARGET_PLATFORM "Which platform should the images run as?" "${PLATFORM_OPTS[@]}"
 
 #--- identity ---------------------------------------------------------------
 echo ""
