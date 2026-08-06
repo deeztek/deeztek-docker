@@ -24,7 +24,7 @@ Edit the .env file:
 
 `vi /opt/bookstack/.env`
 
-Change the following variables to suit your needs, ensuring you set the DBPASS and the MYSQLROOTPASS fields:
+Change the following variables to suit your needs, ensuring you set the DBPASS and the MYSQLROOTPASS fields. **Ensure you do NOT user any special characters to form your passwords**:
 
 ```
 TZ=America/New_York
@@ -85,7 +85,7 @@ If you wish to have e-mail notifications of backup successes/failures, edit /opt
 
 `vi /opt/bookstack/ofelia_config/config.ini`
 
-Set the parameters below under the [global] section to reflect your e-mail server:
+Set the parameters below under the [global] section to reflect your e-mail server (all settings must be present but left blank if encryption, authentication, etc. is not desired):
 
 ```
 [global]
